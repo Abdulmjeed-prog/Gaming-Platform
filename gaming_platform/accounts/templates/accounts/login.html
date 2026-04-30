@@ -1,0 +1,19 @@
+{% extends "main/base.html" %}
+
+{% block content  %}
+<form method="POST">
+    {% csrf_token %}
+
+    <div class="form-group mb-3">
+        <label for="id_username">Username</label>
+        <input type="text" class="form-control" id="id_username" name="username" placeholder="Enter username">
+    </div>
+
+    <div class="form-group mb-3">
+        <label for="id_password">Password</label>
+        <input type="password" class="form-control" id="id_password" name="password" placeholder="Enter password">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
+{% endblock  %}

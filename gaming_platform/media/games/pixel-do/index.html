@@ -1,0 +1,34 @@
+<head>
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+<div style="position: relative; display: inline-block;">
+    <div style="position: absolute; display: flex; width: 100%; align-items: center; padding: 20px;">
+        <div style="position: relative; height: 30px; width: 100%; display: flex; justify-content: flex-end;">
+            <div  style="background-color: yellow; height: 30px; width: 100%;"></div>
+            <div id="playerHealth" style="position: absolute; background: blue; top: 0; right: 0; bottom: 0; width: 100%;"></div>
+        </div>
+
+        <div id="timer" style="background-color: red; width: 100px; height: 100px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">10</div>
+
+        <div style="position: relative; height: 30px; width: 100%;">
+        <div  style="background-color: yellow; height: 30px;"></div>
+        <div id="enemyHealth" style="position: absolute; background: blue; top: 0; right: 0; bottom: 0; left: 0;"></div>
+    </div>
+    </div>
+    <div id="displayText" style="position: absolute; color: white; display: flex; align-items:  center; justify-content: center; top: 0;right: 0; bottom: 0; left: 0; display: none;">Tie</div>
+<canvas></canvas>
+
+</div>
+<script src="index.js"></script>
+<h3>Movement: Use keys (A,D) to move your character left and right.</h3>
+<h3>Jump: Press (W) to make your character jump.</h3>
+<h3>Attack: Press the spacebar (Space) to attack your opponent.</h3>
+<h3>Change Difficulty: Press keys 1, 2, or 3 to change the game difficulty (Easy, Normal, Hard).</h3>
+<h3>Defend Yourself: Avoid enemy attacks and defend yourself to maintain your health.</h3>
+<h3>Defeat the Enemy: Reduce the enemy's health to zero before your own health runs out to win the game.</h3>
+</body>

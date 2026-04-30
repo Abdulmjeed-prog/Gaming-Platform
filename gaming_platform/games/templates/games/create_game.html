@@ -1,0 +1,92 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Create Game{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h2 class="mb-4">Create Game</h2>
+
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">Title</label>
+                            <input type="text" name="title" id="id_title" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_genre" class="form-label">Genre</label>
+                            <select name="genre" id="id_genre" class="form-select">
+                                <option value="">Select genre</option>
+                                {% for genre in genres %}
+                                    <option value="{{ genre.id }}">{{ genre.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            <textarea name="description" id="id_description" rows="4" class="form-control"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_price" class="form-label">Price</label>
+                            <input type="number" step="0.01" name="price" id="id_price" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_publisher" class="form-label">Publisher</label>
+                            <input type="text" name="publisher" id="id_publisher" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_release_year" class="form-label">Release Year</label>
+                            <input type="number" name="release_year" id="id_release_year" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_platform" class="form-label">Platform</label>
+                            <select name="platform" id="id_platform" class="form-select" required>
+                                <option value="PC">PC</option>
+                                <option value="PS4">PS4</option>
+                                <option value="PS5">PS5</option>
+                                <option value="XBOX">Xbox</option>
+                                <option value="SWITCH">Nintendo Switch</option>
+                                <option value="WEB">Web Browser</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_cover" class="form-label">Cover Image</label>
+                            <input type="file" name="cover" id="id_cover" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_play_url" class="form-label">Play URL (optional)</label>
+                            <input type="url" name="play_url" id="id_play_url" class="form-control" placeholder="https://example.com/game">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_game_zip" class="form-label">Game ZIP File</label>
+                            <input type="file" name="game_zip" id="id_game_zip" class="form-control" accept=".zip">
+                            <div class="form-text">Upload a ZIP file containing index.html, JS, CSS, and assets.</div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input type="checkbox" name="is_active" id="id_is_active" class="form-check-input" checked>
+                            <label for="id_is_active" class="form-check-label">Active</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Create Game</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
