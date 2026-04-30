@@ -46,7 +46,7 @@
                 </div>
             {% endif %}
 
-            <form method="POST" action="{}" class="d-flex gap-3 align-items-center flex-wrap">
+            <form method="POST" action="{% url 'commerce:add_to_cart' game.id %}" class="d-flex gap-3 align-items-center flex-wrap">
                 {% csrf_token %}
                 <div style="max-width: 140px;">
                     <label for="quantity" class="form-label">Quantity</label>
