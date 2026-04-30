@@ -24,5 +24,11 @@ urlpatterns = [
     path('', include('main.urls')),
     path('account/', include('accounts.urls')),
     path('games/', include('games.urls')),
-    path('cart/', include('cart.urls')),
+    path('analytics/', include('analytics.urls')), 
+    path('commerce/', include('commerce.urls')),
+    path('library/', include('library.urls')),
+    path('moderation/', include('moderation.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('social/', include('social.urls')),
+
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)
