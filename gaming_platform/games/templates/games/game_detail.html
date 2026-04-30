@@ -5,94 +5,67 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0 h-100">
+    <div class="row g-5 align-items-start">
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0">
                 {% if game.cover %}
-                    <img src="{{ game.cover.url }}" class="card-img-top" alt="{{ game.title }}">
+                    <img src="{{ game.cover.url }}" class="card-img-top img-fluid" alt="{{ game.title }}">
                 {% else %}
                     <div class="p-5 text-center bg-light">No Cover Available</div>
                 {% endif %}
-
-                <div class="card-body">
-                    <h2 class="card-title mb-3">{{ game.title }}</h2>
-
-                    <p class="mb-2"><strong>Genre:</strong>
-                        {% if game.genre %}
-                            {{ game.genre.name }}
-                        {% else %}
-                            No genre
-                        {% endif %}
-                    </p>
-
-                    <p class="mb-2"><strong>Publisher:</strong> {{ game.publisher }}</p>
-                    <p class="mb-2"><strong>Release Year:</strong> {{ game.release_year }}</p>
-                    <p class="mb-2"><strong>Platform:</strong> {{ game.get_platform_display }}</p>
-                    <p class="mb-2"><strong>Price:</strong> ${{ game.price }}</p>
-                    <p class="mb-3">
-                        <strong>Status:</strong>
-                        {% if game.is_active %}
-                            Active
-                        {% else %}
-                            Inactive
-                        {% endif %}
-                    </p>
-
-                    {% if game.description %}
-                        <p class="text-muted">{{ game.description }}</p>
-                    {% endif %}
-                </div>
             </div>
         </div>
 
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h3 class="mb-3">Play Game</h3>
+        <div class="col-lg-7">
+            <div class="mb-3">
+                {% if game.genre %}
+                    <span class="badge bg-dark mb-2">{{ game.genre.name }}</span>
+                {% endif %}
+                <h1 class="mb-3">{{ game.title }}</h1>
+                <h3 class="text-primary mb-4">${{ game.price }}</h3>
+            </div>
 
-                    {% if game.launch_file %}
-        <button type="button" class="btn btn-primary" onclick="openGameFullscreen()">
-            Full Screen
-        </button>
-                        <iframe
-                            id="gameFrame"
-                            src="/media/{{ game.launch_file }}"
-                            width="100%"
-                            height="700"
-                            style="border: none;"
-                            loading="lazy"
-                            allowfullscreen>
-                        </iframe>
-                    {% elif game.play_url %}
-                        <iframe
-                            src="{{ game.play_url }}"
-                            width="100%"
-                            height="700"
-                            frameborder="0"
-                            allowfullscreen>
-                        </iframe>
+            <div class="mb-4">
+                <p class="mb-2"><strong>Publisher:</strong> {{ game.publisher }}</p>
+                <p class="mb-2"><strong>Release Year:</strong> {{ game.release_year }}</p>
+                <p class="mb-2"><strong>Platform:</strong> {{ game.get_platform_display }}</p>
+                <p class="mb-2">
+                    <strong>Status:</strong>
+                    {% if game.is_active %}
+                        <span class="badge bg-success">Available</span>
                     {% else %}
-                        <div class="alert alert-warning mb-0">
-                            No playable version available for this game.
-                        </div>
+                        <span class="badge bg-secondary">Unavailable</span>
                     {% endif %}
+                </p>
+            </div>
+
+            {% if game.description %}
+                <div class="mb-4">
+                    <h5>Description</h5>
+                    <p class="text-muted">{{ game.description }}</p>
                 </div>
+            {% endif %}
+
+            <form method="POST" action="{}" class="d-flex gap-3 align-items-center flex-wrap">
+                {% csrf_token %}
+                <div style="max-width: 140px;">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control">
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" class="btn btn-primary px-4">
+                        Add to Cart
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-4">
+                <a href="{% url 'games:all_games' %}" class="btn btn-outline-secondary">
+                    Back to Games
+                </a>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-function openGameFullscreen() {
-    const iframe = document.getElementById("gameFrame");
-
-    if (iframe.requestFullscreen) {
-        iframe.requestFullscreen();
-    } else if (iframe.webkitRequestFullscreen) {
-        iframe.webkitRequestFullscreen();
-    } else if (iframe.msRequestFullscreen) {
-        iframe.msRequestFullscreen();
-    }
-}
-</script>
 {% endblock %}
