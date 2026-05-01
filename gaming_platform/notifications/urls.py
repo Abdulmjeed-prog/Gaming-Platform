@@ -5,6 +5,6 @@ app_name = "notifications"
 
 urlpatterns = [
 
-    path("notifications/", views.notifications_view, name="notifications_view"),
+    path('announce/<slug:slug>/', views.post_announcement, name='post_announcement'),
 
 ]

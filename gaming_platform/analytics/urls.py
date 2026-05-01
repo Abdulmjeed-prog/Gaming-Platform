@@ -5,6 +5,5 @@ app_name = "analytics"
 
 urlpatterns = [
 
-    path("analytics/", views.analytics_view, name="analytics_view"),
-
+    path('game/<slug:slug>/', views.game_analytics, name='game_analytics'),
 ]

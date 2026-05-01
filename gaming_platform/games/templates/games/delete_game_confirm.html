@@ -1,0 +1,25 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Delete {{ game.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <h4 class="text-danger mb-3">Delete "{{ game.title }}"?</h4>
+                    <p class="text-muted">This will permanently delete the game, all its media, versions, and files. This cannot be undone.</p>
+                    <div class="d-flex gap-2 justify-content-center mt-4">
+                        <a href="{% url 'games:game_manage' game.slug %}" class="btn btn-outline-secondary">Cancel</a>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

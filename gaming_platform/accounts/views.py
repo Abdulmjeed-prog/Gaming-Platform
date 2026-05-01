@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.db import transaction
 from .forms import ProfileForm, CustomUserCreationForm , CustomUserUpdateForm
+from django.contrib.auth.decorators import login_required
 
 
 # Create your views here.
@@ -51,4 +52,19 @@ def logout_view(request:HttpRequest):
     logout(request)
     #response = redirect(request.GET.get("next"))
     return redirect('main:home_view')
+
+
+
+def is_developer(user):
+    return user.groups.filter(name='developer').exists()
+ 
+ 
+@login_required
+def developer_dashboard(request: HttpRequest):
+    if not is_developer(request.user):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+ 
+    games = request.user.games.order_by('-created_at')
+    return render(request, 'accounts/developer_dashboard.html', {'games': games})
 
