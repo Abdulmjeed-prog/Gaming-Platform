@@ -1,47 +1,58 @@
 from django.shortcuts import get_object_or_404, render, redirect
-import os
-import zipfile
-from django.conf import settings
-from django.shortcuts import render, redirect
-from .models import Game,Genre
-from django.http import HttpRequest, HttpResponse
-from .forms import GameForm
-# Create your views here.
+from django.http import HttpRequest
+from .models import Game, GameMedia
+from .forms import GameForm, GameVersionForm
+
 
 def create_game(request: HttpRequest):
     if request.method == 'POST':
         game_form = GameForm(request.POST, request.FILES)
+        version_form = GameVersionForm(request.POST, request.FILES)
+        has_version = bool(request.POST.get('version_number'))
 
-        if game_form.is_valid():
-            game = game_form.save()
+        game_valid = game_form.is_valid()
+        version_valid = version_form.is_valid() if has_version else True
 
-            if game.game_zip:
-                extract_folder = os.path.join(settings.MEDIA_ROOT, 'games', game.slug)
-                os.makedirs(extract_folder, exist_ok=True)
+        if game_valid and version_valid:
+            game = game_form.save(commit=False)
 
-                with zipfile.ZipFile(game.game_zip.path, 'r') as zip_ref:
-                    zip_ref.extractall(extract_folder)
+            req_text = game_form.cleaned_data.get('requirements_text', '')
+            requirements = {}
+            for line in req_text.strip().splitlines():
+                if ':' in line:
+                    key, val = line.split(':', 1)
+                    requirements[key.strip()] = val.strip()
+            game.requirements = requirements or None
+            game.save()
+            game_form.save_m2m()
 
-                for root, dirs, files in os.walk(extract_folder):
-                    if 'index.html' in files:
-                        full_path = os.path.join(root, 'index.html')
-                        relative_path = os.path.relpath(full_path, settings.MEDIA_ROOT)
-                        game.launch_file = relative_path.replace("\\", "/")
-                        game.save()
-                        break
+            if has_version:
+                version = version_form.save(commit=False)
+                version.game = game
+                version.save()
+
+            for f in request.FILES.getlist('images'):
+                GameMedia.objects.create(game=game, media_type='image', file=f, title=f.name)
+
+            for f in request.FILES.getlist('videos'):
+                GameMedia.objects.create(game=game, media_type='video', file=f, title=f.name)
 
             return redirect('games:game_detail', slug=game.slug)
-
     else:
         game_form = GameForm()
+        version_form = GameVersionForm()
 
-    return render(request, 'games/create_game.html', {'game_form': game_form})
+    return render(request, 'games/create_game.html', {
+        'game_form': game_form,
+        'version_form': version_form,
+    })
 
 
-def game_detail(request:HttpRequest, slug):
+def game_detail(request: HttpRequest, slug):
     game = get_object_or_404(Game, slug=slug)
     return render(request, 'games/game_detail.html', {'game': game})
 
-def all_games(request:HttpRequest):
+
+def all_games(request: HttpRequest):
     games = Game.objects.all()
-    return render(request, 'games/all_games.html',{'games': games})
+    return render(request, 'games/all_games.html', {'games': games})
