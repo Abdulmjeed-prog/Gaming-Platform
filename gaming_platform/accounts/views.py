@@ -27,7 +27,7 @@ def signup_view(request:HttpRequest):
         else:
             print(user_form.errors)
             messages.error(request, "something goes Wrong")
-            return render(request, 'accounts/signup.html', {'user_form': user_form})
+            return render(request, 'accounts/signup.html', {'user_form': user_form,'profile_form': profile_form})
         
     return render(request, 'accounts/signup.html')
 

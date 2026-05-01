@@ -5,6 +5,24 @@
 
 {% block content %}
 <div class="container py-5">
+
+    {% if is_dev %}
+        <div class="alert alert-light border d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+            <span class="text-muted small">You own this game</span>
+            <div class="d-flex gap-2">
+                <a href="{% url 'games:edit_game' game.slug %}" class="btn btn-sm btn-outline-primary">Edit Game</a>
+                <form method="POST" action="{% url 'games:toggle_publish' game.slug %}">
+                    {% csrf_token %}
+                    {% if game.is_active %}
+                        <button type="submit" class="btn btn-sm btn-warning">Unpublish</button>
+                    {% else %}
+                        <button type="submit" class="btn btn-sm btn-success">Publish</button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
     <div class="row g-5 align-items-start">
         <div class="col-lg-5">
             <div class="card shadow-sm border-0">
@@ -14,12 +32,34 @@
                     <div class="p-5 text-center bg-light">No Cover Available</div>
                 {% endif %}
             </div>
+
+            {% if images %}
+                <div class="row g-2 mt-2">
+                    {% for img in images %}
+                        <div class="col-4">
+                            <img src="{{ img.file.url }}" class="img-fluid rounded" alt="{{ img.title }}" style="height:70px; width:100%; object-fit:cover;">
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if videos %}
+                <div class="mt-3">
+                    {% for vid in videos %}
+                        <video controls class="w-100 rounded mb-2" style="max-height:200px;">
+                            <source src="{{ vid.file.url }}">
+                        </video>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
 
         <div class="col-lg-7">
             <div class="mb-3">
-                {% if game.genre %}
-                    <span class="badge bg-dark mb-2">{{ game.genre.name }}</span>
+                {% if game.genre.all %}
+                    {% for g in game.genre.all %}
+                        <span class="badge bg-dark mb-2">{{ g.name }}</span>
+                    {% endfor %}
                 {% endif %}
                 <h1 class="mb-3">{{ game.title }}</h1>
                 <h3 class="text-primary mb-4">${{ game.price }}</h3>
@@ -37,6 +77,9 @@
                         <span class="badge bg-secondary">Unavailable</span>
                     {% endif %}
                 </p>
+                {% if game.avg_rating %}
+                    <p class="mb-2"><strong>Rating:</strong> {{ game.avg_rating|floatformat:1 }} / 5 ({{ game.rating_count }} ratings)</p>
+                {% endif %}
             </div>
 
             {% if game.description %}
@@ -46,24 +89,34 @@
                 </div>
             {% endif %}
 
-            <form method="POST" action="{% url 'commerce:add_to_cart' game.id %}" class="d-flex gap-3 align-items-center flex-wrap">
-                {% csrf_token %}
-                <div style="max-width: 140px;">
-                    <label for="quantity" class="form-label">Quantity</label>
-                    <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control">
+            {% if game.requirements %}
+                <div class="mb-4">
+                    <h5>Requirements</h5>
+                    <ul class="list-unstyled text-muted small">
+                        {% for key, val in game.requirements.items %}
+                            <li><strong>{{ key }}:</strong> {{ val }}</li>
+                        {% endfor %}
+                    </ul>
                 </div>
+            {% endif %}
 
-                <div class="pt-4">
-                    <button type="submit" class="btn btn-primary px-4">
-                        Add to Cart
-                    </button>
-                </div>
-            </form>
+            {% if game.is_active %}
+                <form method="POST" action="{% url 'commerce:add_to_cart' game.id %}" class="d-flex gap-3 align-items-center flex-wrap">
+                    {% csrf_token %}
+                    <div style="max-width: 140px;">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control">
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit" class="btn btn-primary px-4">Add to Cart</button>
+                    </div>
+                </form>
+            {% else %}
+                <p class="text-muted">This game is not available for purchase.</p>
+            {% endif %}
 
             <div class="mt-4">
-                <a href="{% url 'games:all_games' %}" class="btn btn-outline-secondary">
-                    Back to Games
-                </a>
+                <a href="{% url 'games:all_games' %}" class="btn btn-outline-secondary">Back to Games</a>
             </div>
         </div>
     </div>
