@@ -5,12 +5,12 @@ from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    ROLE_CHOICES = (
-        ('player', 'Player'),
-        ('developer', 'Developer'),
-        ('admin', 'Admin'),
-    )
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='player')
+    # ROLE_CHOICES = (
+    #     ('player', 'Player'),
+    #     ('developer', 'Developer'),
+    #     ('admin', 'Admin'),
+    # )
+    # role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='player')
     bio = models.TextField(blank=True)
     avatar = models.ImageField(upload_to="images/avatars/", default="images/avatars/default_avatar.jpg")
 

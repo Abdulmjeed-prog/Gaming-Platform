@@ -6,6 +6,7 @@ class Notification(models.Model):
         ('purchase', 'Purchase'),
         ('comment_reply', 'Comment Reply'),
         ('game_update', 'Game Update'),
+        ('announcement', 'Announcement')
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
