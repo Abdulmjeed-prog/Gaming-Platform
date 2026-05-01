@@ -1,6 +1,9 @@
 from django.db import models
 from django.utils.text import slugify
 
+from django.conf import settings
+
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -15,6 +18,17 @@ class Genre(models.Model):
 
 
 class Game(models.Model):
+
+    
+    developer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='games',
+    )
+
+
     class PlatformChoices(models.TextChoices):
         PC = 'PC', 'PC'
         PS4 = 'PS4', 'PS4'
@@ -104,11 +118,19 @@ class GameMedia(models.Model):
 
 
 class GameVersion(models.Model):
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='versions')
-    version_number = models.CharField(max_length=50)
-    file = models.FileField(upload_to='game_versions/')
-    entry_point = models.CharField(max_length=255)  # launch file
+    game = models.ForeignKey('Game', on_delete=models.CASCADE, related_name='versions')
+    version_number = models.CharField(max_length=20)
+    file = models.FileField(upload_to='game_versions/', blank=True)
+    entry_point = models.CharField(max_length=255, blank=True)
     changelog = models.TextField(blank=True)
-
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+ 
+    def save_as_active(self):
+        self.game.versions.update(is_active=False)
+        self.is_active = True
+        self.save(update_fields=['is_active'])
+ 
+    def __str__(self):
+        return f'{self.game.title} v{self.version_number}'
+ 
