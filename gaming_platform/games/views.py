@@ -18,7 +18,7 @@ def extract_game_zip(zip_file_field, slug):
 
 
 def is_developer(user):
-    return hasattr(user, 'profile') and user.profile.role == 'developer'
+    return user.groups.filter(name='developer').exists()
 
 
 def owns_game(user, game):
@@ -62,11 +62,10 @@ def create_game(request: HttpRequest):
 
             for f in request.FILES.getlist('images'):
                 GameMedia.objects.create(game=game, media_type='image', file=f, title=f.name)
-
             for f in request.FILES.getlist('videos'):
                 GameMedia.objects.create(game=game, media_type='video', file=f, title=f.name)
 
-            return redirect('games:game_detail', slug=game.slug)
+            return redirect('games:game_manage', slug=game.slug)
     else:
         game_form = GameForm()
         version_form = GameVersionForm()
@@ -74,6 +73,19 @@ def create_game(request: HttpRequest):
     return render(request, 'games/create_game.html', {
         'game_form': game_form,
         'version_form': version_form,
+    })
+
+
+@login_required
+def game_manage(request: HttpRequest, slug):
+    game = get_object_or_404(Game, slug=slug)
+    if not owns_game(request.user, game):
+        return HttpResponseForbidden()
+
+    versions = game.versions.order_by('-created_at')
+    return render(request, 'games/game_manage.html', {
+        'game': game,
+        'versions': versions,
     })
 
 
@@ -102,7 +114,7 @@ def edit_game(request: HttpRequest, slug):
             for f in request.FILES.getlist('videos'):
                 GameMedia.objects.create(game=game, media_type='video', file=f, title=f.name)
 
-            return redirect('games:edit_game', slug=game.slug)
+            return redirect('games:game_manage', slug=game.slug)
     else:
         req_lines = '\n'.join(
             f'{k}: {v}' for k, v in (game.requirements or {}).items()
@@ -122,6 +134,25 @@ def edit_game(request: HttpRequest, slug):
         'images': images,
         'videos': videos,
     })
+
+
+@login_required
+def delete_game(request: HttpRequest, slug):
+    game = get_object_or_404(Game, slug=slug)
+    if not owns_game(request.user, game):
+        return HttpResponseForbidden()
+
+    if request.method == 'POST':
+        for media in game.media.all():
+            media.file.delete(save=False)
+        for version in game.versions.all():
+            version.file.delete(save=False)
+        if game.cover:
+            game.cover.delete(save=False)
+        game.delete()
+        return redirect('accounts:developer_dashboard')
+
+    return render(request, 'games/delete_game_confirm.html', {'game': game})
 
 
 @login_required
@@ -167,7 +198,7 @@ def toggle_publish(request: HttpRequest, slug):
         game.is_active = not game.is_active
         game.save(update_fields=['is_active'])
 
-    return redirect('games:game_detail', slug=game.slug)
+    return redirect('games:game_manage', slug=game.slug)
 
 
 @login_required
