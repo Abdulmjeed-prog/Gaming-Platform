@@ -6,6 +6,9 @@ from .models import Cart, CartItem,Order, OrderItem, PaymentMethod, StripeCustom
 import stripe
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
+from decimal import Decimal
+from django.contrib import messages
+from django.db import transaction
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -186,5 +189,92 @@ def save_card_success(request):
 def my_cards_view(request):
     cards = PaymentMethod.objects.filter(user=request.user).order_by('-is_default', '-created_at')
     return render(request, 'commerce/my_cards.html', {'cards': cards})
+
+
+
+
+@login_required
+def checkout_view(request: HttpRequest):
+    cart = Cart.objects.filter(user=request.user).first()
+
+    if not cart or not cart.items.exists():
+        return redirect('commerce:cart_view')
+
+    cart_items = cart.items.all()
+    total = sum(item.price * item.quantity for item in cart_items)
+    saved_cards = PaymentMethod.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+
+    if request.method == 'POST':
+        payment_method_id = request.POST.get('payment_method')
+
+        if not payment_method_id:
+            messages.error(request, 'Please select a card.')
+            return redirect('commerce:checkout')
+
+        selected_card = PaymentMethod.objects.filter(
+            user=request.user,
+            stripe_payment_method_id=payment_method_id
+        ).first()
+
+        if not selected_card:
+            messages.error(request, 'Invalid card selected.')
+            return redirect('commerce:checkout')
+
+        try:
+            payment_intent = stripe.PaymentIntent.create(
+                amount=int(total * 100),
+                currency='usd',
+                customer=selected_card.stripe_customer_id,
+                payment_method=selected_card.stripe_payment_method_id,
+                off_session=True,
+                confirm=True,
+            )
+
+            with transaction.atomic():
+                order = Order.objects.create(
+                    user=request.user,
+                    total_amount=total,
+                    status='paid',
+                    payment_method=f"{selected_card.brand} **** {selected_card.last4}",
+                    transaction_id=payment_intent.id
+                )
+
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        game=item.game,
+                        price=item.price,
+                        quantity=item.quantity
+                    )
+
+                cart.items.all().delete()
+
+            return redirect('commerce:order_success', order_id=order.id)
+
+        except stripe.error.CardError as e:
+            Order.objects.create(
+                user=request.user,
+                total_amount=total,
+                status='failed',
+                payment_method=f"{selected_card.brand} **** {selected_card.last4}",
+                transaction_id=''
+            )
+            messages.error(request, f"Payment failed: {e.user_message}")
+            return redirect('commerce:checkout')
+
+        except Exception as e:
+            messages.error(request, f"Something went wrong: {str(e)}")
+            return redirect('commerce:checkout')
+
+    return render(request, 'commerce/checkout.html', {
+        'items': cart_items,
+        'total': total,
+        'saved_cards': saved_cards,
+    })
+
+@login_required
+def order_success(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    return render(request, 'commerce/order_success.html', {'order': order})
 
 
