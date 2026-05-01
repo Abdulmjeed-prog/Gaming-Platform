@@ -1,0 +1,48 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}My Games{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">My Games</h2>
+        <a href="{% url 'games:create_game' %}" class="btn btn-primary">+ New Game</a>
+    </div>
+
+    {% if games %}
+        <div class="row g-4">
+            {% for game in games %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        {% if game.cover %}
+                            <img src="{{ game.cover.url }}" class="card-img-top" style="height:160px; object-fit:cover;" alt="{{ game.title }}">
+                        {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center" style="height:160px;">
+                                <span class="text-muted">No Cover</span>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ game.title }}</h6>
+                                {% if game.is_active %}
+                                    <span class="badge bg-success">Published</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Draft</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted small mb-3">${{ game.price }} &middot; {{ game.created_at|date:"M d, Y" }}</p>
+                            <a href="{% url 'games:game_manage' game.slug %}" class="btn btn-outline-primary btn-sm w-100">Manage</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <p>You have not published any games yet.</p>
+            <a href="{% url 'games:create_game' %}" class="btn btn-primary">Create Your First Game</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

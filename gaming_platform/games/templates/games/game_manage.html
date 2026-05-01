@@ -1,0 +1,112 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Manage — {{ game.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <div class="d-flex align-items-center gap-3 mb-1">
+        <a href="{% url 'accounts:developer_dashboard' %}" class="text-muted text-decoration-none small">&larr; My Games</a>
+    </div>
+
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-5 mt-2">
+        <div>
+            <h2 class="mb-1">{{ game.title }}</h2>
+            <span class="text-muted small">{{ game.slug }}</span>
+        </div>
+        {% if game.is_active %}
+            <span class="badge bg-success fs-6 px-3 py-2">Published</span>
+        {% else %}
+            <span class="badge bg-secondary fs-6 px-3 py-2">Draft</span>
+        {% endif %}
+    </div>
+
+    <div class="row g-3">
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'games:edit_game' game.slug %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 p-4">
+                    <div class="fs-2 mb-2">✏️</div>
+                    <h5>Edit Game</h5>
+                    <p class="text-muted small mb-0">Update details, cover, media, requirements, and pricing.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'games:edit_game' game.slug %}#versions" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 p-4">
+                    <div class="fs-2 mb-2">📦</div>
+                    <h5>Versions</h5>
+                    <p class="text-muted small mb-0">
+                        Upload a new version or change the active one.
+                        {% if versions %}
+                            <br><strong>{{ versions.count }}</strong> version{{ versions.count|pluralize }} uploaded.
+                        {% endif %}
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'games:game_detail' game.slug %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 p-4">
+                    <div class="fs-2 mb-2">🛒</div>
+                    <h5>Store Page</h5>
+                    <p class="text-muted small mb-0">View how your game appears to players.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'notifications:post_announcement' game.slug %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 p-4">
+                    <div class="fs-2 mb-2">📢</div>
+                    <h5>Post Announcement</h5>
+                    <p class="text-muted small mb-0">Notify all players who own this game.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'analytics:game_analytics' game.slug %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 p-4">
+                    <div class="fs-2 mb-2">📊</div>
+                    <h5>Analytics</h5>
+                    <p class="text-muted small mb-0">Sales, player engagement, and rating trends.</p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100 p-4">
+                <div class="fs-2 mb-2">
+                    {% if game.is_active %}🔴{% else %}🟢{% endif %}
+                </div>
+                <h5>{% if game.is_active %}Unpublish{% else %}Publish{% endif %}</h5>
+                <p class="text-muted small mb-3">
+                    {% if game.is_active %}Hide from the store.{% else %}Make visible to players.{% endif %}
+                </p>
+                <form method="POST" action="{% url 'games:toggle_publish' game.slug %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm {% if game.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                        {% if game.is_active %}Unpublish{% else %}Publish{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <a href="{% url 'games:delete_game' game.slug %}" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 p-4 border-danger">
+                    <div class="fs-2 mb-2">🗑️</div>
+                    <h5 class="text-danger">Delete Game</h5>
+                    <p class="text-muted small mb-0">Permanently remove this game and all its files.</p>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
