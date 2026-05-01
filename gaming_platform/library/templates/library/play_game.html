@@ -1,0 +1,159 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Playing {{ game.title }}{% endblock %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #15181f;
+    --border: #ffffff0f;
+    --accent: #c8f135;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 16px;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .back-btn {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s;
+  }
+
+  .back-btn:hover { color: var(--text); }
+
+  .game-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .timer-display {
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .save-status {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .game-frame {
+    flex: 1;
+    width: 100%;
+    border: none;
+    display: block;
+    background: #000;
+  }
+</style>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="{% url 'library:library_view' %}" class="back-btn">← Library</a>
+    <span class="game-title">{{ game.title }}</span>
+  </div>
+  <div class="topbar-right">
+    <span class="save-status" id="saveStatus"></span>
+    <span class="timer-display" id="timerDisplay">00:00</span>
+  </div>
+</div>
+
+<iframe
+  src="{{ game_url }}"
+  class="game-frame"
+  allowfullscreen
+  allow="fullscreen; autoplay"
+  id="gameFrame"
+></iframe>
+
+<script>
+  const SAVE_URL = "{% url 'library:save_progress' game.slug %}";
+  const CSRF = "{{ csrf_token }}";
+  const INTERVAL = 30;
+
+  let elapsed = 0;
+  let unsaved = 0;
+  const display = document.getElementById('timerDisplay');
+  const status = document.getElementById('saveStatus');
+
+  function fmt(s) {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  }
+
+  function saveProgress(seconds) {
+    if (seconds <= 0) return;
+    const body = new FormData();
+    body.append('seconds', seconds);
+    body.append('csrfmiddlewaretoken', CSRF);
+    fetch(SAVE_URL, { method: 'POST', body })
+      .then(r => r.json())
+      .then(() => { status.textContent = 'Saved'; setTimeout(() => status.textContent = '', 2000); })
+      .catch(() => { status.textContent = 'Save failed'; });
+  }
+
+  setInterval(() => {
+    elapsed++;
+    unsaved++;
+    display.textContent = fmt(elapsed);
+    if (unsaved >= INTERVAL) {
+      saveProgress(unsaved);
+      unsaved = 0;
+    }
+  }, 1000);
+
+  window.addEventListener('beforeunload', () => {
+    if (unsaved > 0) {
+      const body = new FormData();
+      body.append('seconds', unsaved);
+      body.append('csrfmiddlewaretoken', CSRF);
+      navigator.sendBeacon(SAVE_URL, body);
+    }
+  });
+</script>
+{% endblock %}
