@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Profile
+from .models import Profile,DeveloperProfile
 from django.contrib.auth.forms import UserCreationForm
+
 
 class ProfileForm(forms.ModelForm):
     class Meta:
@@ -31,5 +32,11 @@ class CustomUserUpdateForm(forms.ModelForm):
             raise forms.ValidationError("This email is already in use.")
 
         return email
+    
+class DeveloperProfileForm(forms.ModelForm):
+    class Meta:
+        model = DeveloperProfile
+        fields = ['company_name', 'website', 'description']
+
 
 

@@ -9,7 +9,7 @@
         </div>
     {% endfor %}
 {% endif %}
-
+<h3>are you a dev? <a href="{% url 'accounts:developer_signup_view' %}">for devs</a></h3>
 <form method="POST" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="form-group mb-3">

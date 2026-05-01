@@ -27,7 +27,8 @@ def owns_game(user, game):
 
 @login_required
 def create_game(request: HttpRequest):
-    if not is_developer(request.user):
+    if not request.user.groups.filter(name='Developer').exists():
+        print('yes im')
         return HttpResponseForbidden()
 
     if request.method == 'POST':

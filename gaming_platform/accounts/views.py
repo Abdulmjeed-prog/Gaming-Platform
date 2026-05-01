@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect
 from django.http import HttpRequest, HttpResponse
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.db import transaction
-from .forms import ProfileForm, CustomUserCreationForm , CustomUserUpdateForm
+from .forms import ProfileForm, CustomUserCreationForm , CustomUserUpdateForm, DeveloperProfileForm
 
 
 # Create your views here.
@@ -31,14 +31,55 @@ def signup_view(request:HttpRequest):
         
     return render(request, 'accounts/signup.html')
 
+def developer_signup_view(request: HttpRequest):
+    if request.user.is_authenticated:
+        return redirect('main:home_view')
+
+    if request.method == 'POST':
+        user_form = CustomUserCreationForm(request.POST)
+        developer_form = DeveloperProfileForm(request.POST)
+
+        if user_form.is_valid() and developer_form.is_valid():
+            with transaction.atomic():
+                new_user = user_form.save()
+
+                developer_group = Group.objects.get(name='Developer')
+                new_user.groups.add(developer_group)
+
+                developer_profile = developer_form.save(commit=False)
+                developer_profile.user = new_user
+                developer_profile.save()
+
+                messages.success(request, "Developer account created successfully.")
+                return redirect('accounts:login_view')
+
+        else:
+            messages.error(request, "Something went wrong.")
+            return render(request, 'accounts/developer_signup.html', {
+                'user_form': user_form,
+                'developer_form': developer_form,
+            })
+
+    else:
+        user_form = CustomUserCreationForm()
+        developer_form = DeveloperProfileForm()
+
+    return render(request, 'accounts/developer_signup.html', {
+        'user_form': user_form,
+        'developer_form': developer_form,
+    })
+
+
 def login_view(request:HttpRequest):
     if request.user.is_authenticated:
         return redirect('main:home_view')
     if request.method == 'POST':
         user = authenticate(request, username = request.POST['username'], password = request.POST['password'])
-
         if user:
             login(request,user)
+            if request.user.groups.filter(name='Developer'):
+                messages.success(request, "Logged in successufly")
+                return redirect('games:all_games')
             messages.success(request, "Logged in successufly")
             return redirect('main:home_view')
         else:
