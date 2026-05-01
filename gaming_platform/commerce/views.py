@@ -9,6 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from decimal import Decimal
 from django.contrib import messages
 from django.db import transaction
+from library.models import UserGameLibrary
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -194,6 +195,7 @@ def my_cards_view(request):
 
 
 @login_required
+@login_required
 def checkout_view(request: HttpRequest):
     cart = Cart.objects.filter(user=request.user).first()
 
@@ -245,6 +247,15 @@ def checkout_view(request: HttpRequest):
                         game=item.game,
                         price=item.price,
                         quantity=item.quantity
+                    )
+
+                    UserGameLibrary.objects.get_or_create(
+                        user=request.user,
+                        game=item.game,
+                        defaults={
+                            'source': 'purchase',
+                            'is_active': True,
+                        }
                     )
 
                 cart.items.all().delete()
