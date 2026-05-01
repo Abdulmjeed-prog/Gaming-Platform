@@ -54,7 +54,7 @@ class PaymentMethod(models.Model):
     exp_year = models.PositiveSmallIntegerField(null=True, blank=True)
     is_default = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    
     def __str__(self):
         return f"{self.brand} **** {self.last4}"
     
