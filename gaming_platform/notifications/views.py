@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponseForbidden
 from games.models import Game
 from library.models import UserGameLibrary
-from .models import Notification
+from accounts.models import DeveloperProfile, FollowDeveloper
+from .models import Notification, DeveloperAnnouncement
 from .forms import AnnouncementForm
 
 
@@ -22,9 +23,7 @@ def post_announcement(request: HttpRequest, slug):
         if form.is_valid():
             title = form.cleaned_data['title']
             message = form.cleaned_data['message']
-            link = request.build_absolute_uri(
-                f'/games/{game.slug}/'
-            )
+            link = request.build_absolute_uri(f'/games/{game.slug}/')
 
             owners = UserGameLibrary.objects.filter(
                 game=game
@@ -49,3 +48,45 @@ def post_announcement(request: HttpRequest, slug):
         'form': form,
         'game': game,
     })
+
+
+@login_required
+def post_developer_announcement(request: HttpRequest, username):
+    dev_profile = get_object_or_404(
+        DeveloperProfile, user=request.user
+    )
+
+    if request.user.username != username:
+        return HttpResponseForbidden()
+
+    if request.method == 'POST':
+        form = AnnouncementForm(request.POST)
+        if form.is_valid():
+            announcement = DeveloperAnnouncement.objects.create(
+                developer=dev_profile,
+                title=form.cleaned_data['title'],
+                content=form.cleaned_data['message'],
+            )
+
+            followers = FollowDeveloper.objects.filter(
+                developer=dev_profile
+            ).select_related('user')
+
+            profile_link = request.build_absolute_uri(
+                f'/accounts/profile/{username}/'
+            )
+
+            Notification.objects.bulk_create([
+                Notification(
+                    user=f.user,
+                    type='announcement',
+                    title=announcement.title,
+                    message=announcement.content,
+                    link=profile_link,
+                )
+                for f in followers
+            ])
+
+            return redirect('accounts:developer_profile', username=username)
+
+    return redirect('accounts:developer_profile', username=username)

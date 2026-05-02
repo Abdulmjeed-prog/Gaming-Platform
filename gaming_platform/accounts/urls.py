@@ -10,4 +10,6 @@ urlpatterns = [
     path('developer/', views.developer_dashboard, name='developer_dashboard'),
     path('signup_dev/', views.developer_signup_view, name='developer_signup_view'),
     path('profile/', views.profile_view, name='profile_view'),
+    path('profile/<str:username>/', views.developer_profile_view, name='developer_profile'),
+    path('follow/<int:developer_id>/', views.follow_toggle_view, name='follow_toggle'),
 ]

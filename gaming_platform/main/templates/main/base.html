@@ -57,6 +57,14 @@
                             <li>
                                 <a class="dropdown-item" href="{% url 'accounts:profile_view' %}">My Profile</a>
                             </li>
+                            {% if user.groups.all.0.name == 'Developer' %}
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:developer_profile' user.username %}">Dev Profile</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:developer_dashboard' %}">Dashboard</a>
+                            </li>
+                            {% endif %}
                             <li>
                                 <a class="dropdown-item" href="{% url 'games:create_game' %}">Create Game</a>
                             </li>
@@ -71,6 +79,7 @@
                     <a href="{% url 'accounts:signup_view' %}" class="btn btn-primary btn-sm">Sign Up</a>
                 {% endif %}
             </div>
+
         </div>
     </div>
 </nav>
