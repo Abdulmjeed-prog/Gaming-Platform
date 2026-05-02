@@ -7,6 +7,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.db import transaction
 from .forms import ProfileForm, CustomUserCreationForm , CustomUserUpdateForm, DeveloperProfileForm
 from django.contrib.auth.decorators import login_required
+from .models import Profile
 
 
 # Create your views here.
@@ -108,4 +109,9 @@ def developer_dashboard(request: HttpRequest):
  
     games = request.user.games.order_by('-created_at')
     return render(request, 'accounts/developer_dashboard.html', {'games': games})
+
+def profile_view(request: HttpRequest):
+    profile, created = Profile.objects.get_or_create(user=request.user)
+    return render(request, 'accounts/profile.html', {'profile': profile})
+
 
