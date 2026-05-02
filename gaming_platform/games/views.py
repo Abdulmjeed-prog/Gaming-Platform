@@ -1,3 +1,4 @@
+import shutil
 import zipfile
 from pathlib import Path
 from django.conf import settings
@@ -15,10 +16,26 @@ from django.contrib import messages
 def extract_game_zip(zip_file_field, slug):
     extract_to = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
     if extract_to.exists():
-        return
+        shutil.rmtree(extract_to)
     extract_to.mkdir(parents=True, exist_ok=True)
+
     with zipfile.ZipFile(zip_file_field.path, 'r') as zf:
-        zf.extractall(extract_to)
+        names = [n for n in zf.namelist() if not n.startswith('__MACOSX')]
+        top_dirs = {Path(n).parts[0] for n in names if Path(n).parts}
+
+        if len(top_dirs) == 1:
+            prefix = list(top_dirs)[0] + '/'
+            for member in zf.infolist():
+                if member.filename.startswith('__MACOSX'):
+                    continue
+                if member.filename.startswith(prefix):
+                    member.filename = member.filename[len(prefix):]
+                if member.filename:
+                    zf.extract(member, extract_to)
+        else:
+            for member in zf.infolist():
+                if not member.filename.startswith('__MACOSX'):
+                    zf.extract(member, extract_to)
 
 
 def is_developer(user):
@@ -59,6 +76,7 @@ def create_game(request: HttpRequest):
             if has_version:
                 version = version_form.save(commit=False)
                 version.game = game
+                version.is_active = True
                 version.save()
                 if version.file:
                     extract_game_zip(version.file, game.slug)
@@ -152,6 +170,9 @@ def delete_game(request: HttpRequest, slug):
             version.file.delete(save=False)
         if game.cover:
             game.cover.delete(save=False)
+        extracted = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
+        if extracted.exists():
+            shutil.rmtree(extracted)
         game.delete()
         return redirect('accounts:developer_dashboard')
 
@@ -211,8 +232,12 @@ def set_active_version(request: HttpRequest, slug, version_pk):
         return HttpResponseForbidden()
 
     if request.method == 'POST':
+        version = get_object_or_404(GameVersion, pk=version_pk, game=game)
         game.versions.update(is_active=False)
-        get_object_or_404(GameVersion, pk=version_pk, game=game).save_as_active()
+        version.is_active = True
+        version.save(update_fields=['is_active'])
+        if version.file:
+            extract_game_zip(version.file, game.slug)
 
     return redirect('games:edit_game', slug=game.slug)
 
