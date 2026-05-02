@@ -3,22 +3,21 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
 from games.models import Game, GameKey
-from .models import Cart, CartItem,Order, OrderItem, PaymentMethod, StripeCustomer
+from .models import Cart, CartItem, Order, OrderItem, PaymentMethod, StripeCustomer
 import stripe
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from decimal import Decimal
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import F
+from django.utils import timezone
 from library.models import UserGameLibrary
-
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
-# Create your views here.
 
 def commerce_view(request):
-    # Logic for the view
     return render(request, 'commerce/commerce.html')
 
 
@@ -46,6 +45,8 @@ def add_to_cart(request, game_id):
         cart_item.save()
 
     return redirect('commerce:cart_view')
+
+
 @login_required
 def cart_view(request: HttpRequest):
     cart = Cart.objects.filter(user=request.user).first()
@@ -90,6 +91,7 @@ def remove_from_cart(request, item_id):
 
     return redirect('commerce:cart_view')
 
+
 def get_or_create_stripe_customer(user):
     customer_obj, created = StripeCustomer.objects.get_or_create(user=user)
 
@@ -129,10 +131,8 @@ def save_card_success(request):
         return redirect('commerce:add_card')
 
     setup_intent = stripe.SetupIntent.retrieve(setup_intent_id)
-
     payment_method_id = setup_intent.payment_method
     stripe_customer_id = setup_intent.customer
-
     payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
 
     obj, created = PaymentMethod.objects.get_or_create(
@@ -157,6 +157,33 @@ def my_cards_view(request):
     return render(request, 'commerce/my_cards.html', {'cards': cards})
 
 
+def _record_sale(item, today):
+    # update game analytics
+    analytics, _ = GameAnalytics.objects.get_or_create(
+        game=item.game,
+        date=today,
+        defaults={'views': 0, 'purchases': 0, 'revenue': Decimal('0.00')}
+    )
+    GameAnalytics.objects.filter(pk=analytics.pk).update(
+        purchases=F('purchases') + item.quantity,
+        revenue=F('revenue') + item.price * item.quantity,
+    )
+
+    # update developer earnings
+    if item.game.developer:
+        try:
+            dev_profile = DeveloperProfile.objects.get(user=item.game.developer)
+        except DeveloperProfile.DoesNotExist:
+            return
+
+        earnings, _ = DeveloperEarnings.objects.get_or_create(
+            developer=dev_profile,
+            date=today,
+            defaults={'revenue': Decimal('0.00')}
+        )
+        DeveloperEarnings.objects.filter(pk=earnings.pk).update(
+            revenue=F('revenue') + item.price * item.quantity,
+        )
 
 
 @login_required
@@ -215,6 +242,8 @@ def checkout_view(request: HttpRequest):
                 confirm=True,
             )
 
+            today = timezone.now().date()
+
             with transaction.atomic():
                 order = Order.objects.create(
                     user=request.user,
@@ -257,6 +286,8 @@ def checkout_view(request: HttpRequest):
                             game_key.assigned_at = timezone.now()
                             game_key.save()
 
+                    _record_sale(item, today)
+
                 cart.items.all().delete()
 
             messages.success(request, 'Payment completed successfully.')
@@ -283,9 +314,8 @@ def checkout_view(request: HttpRequest):
         'saved_cards': saved_cards,
     })
 
+
 @login_required
 def order_success(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'commerce/order_success.html', {'order': order})
-
-
