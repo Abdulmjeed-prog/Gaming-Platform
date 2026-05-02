@@ -13,6 +13,8 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 from library.models import UserGameLibrary
+from analytics.models import GameAnalytics,DeveloperEarnings
+from accounts.models import DeveloperProfile
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
