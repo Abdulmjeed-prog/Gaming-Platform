@@ -88,43 +88,6 @@ def remove_from_cart(request, item_id):
 
     return redirect('commerce:cart_view')
 
-@login_required
-def checkout_view(request: HttpRequest):
-    cart = Cart.objects.filter(user=request.user).first()
-
-    if not cart or not cart.items.exists():
-        return redirect('commerce:cart_view')
-
-    cart_items = cart.items.all()
-    total = sum(item.price * item.quantity for item in cart_items)
-
-    if request.method == 'POST':
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=total,
-            status='pending',
-            payment_method='Cash on Delivery',
-            transaction_id=''
-        )
-
-        for item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                game=item.game,
-                price=item.price,
-                quantity=item.quantity
-            )
-
-        cart.items.all().delete()
-
-        return redirect('commerce:order_success', order_id=order.id)
-
-    return render(request, 'commerce/checkout.html', {
-        'items': cart_items,
-        'total': total,
-    })
-
-
 def get_or_create_stripe_customer(user):
     customer_obj, created = StripeCustomer.objects.get_or_create(user=user)
 
@@ -194,7 +157,6 @@ def my_cards_view(request):
 
 
 
-@login_required
 @login_required
 def checkout_view(request: HttpRequest):
     cart = Cart.objects.filter(user=request.user).first()
