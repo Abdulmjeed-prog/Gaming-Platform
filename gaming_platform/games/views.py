@@ -5,8 +5,12 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpRequest, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from .models import Game, GameMedia, GameVersion
+from .models import Game, GameMedia, GameVersion, Genre
 from .forms import GameForm, GameVersionForm
+from django.core.paginator import Paginator
+from social.forms import CommentForm, ReviewForm
+from social.models import Comment, Review
+from django.contrib import messages
 
 
 def extract_game_zip(zip_file_field, slug):
@@ -44,7 +48,7 @@ def owns_game(user, game):
 
 @login_required
 def create_game(request: HttpRequest):
-    if not is_developer(request.user):
+    if not request.user.groups.filter(name='Developer').exists():
         return HttpResponseForbidden()
 
     if request.method == 'POST':
@@ -239,18 +243,104 @@ def set_active_version(request: HttpRequest, slug, version_pk):
 
 
 def game_detail(request: HttpRequest, slug):
-    game = get_object_or_404(Game, slug=slug)
+    game = get_object_or_404(Game.objects.prefetch_related('genre', 'media'), slug=slug)
     images = game.media.filter(media_type='image')
     videos = game.media.filter(media_type='video')
     is_dev = request.user.is_authenticated and owns_game(request.user, game)
+
+    reviews = (
+        Review.objects
+        .filter(game=game, is_approved=True)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+
+    comments = (
+        Comment.objects
+        .filter(game=game, is_approved=True, parent__isnull=True)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+
+    existing_review = None
+    if request.user.is_authenticated:
+        existing_review = Review.objects.filter(user=request.user, game=game).first()
+
+    review_form = ReviewForm(instance=existing_review)
+    comment_form = CommentForm()
+
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, 'You need to log in first.')
+            return redirect('accounts:login_view')
+
+        if 'submit_review' in request.POST:
+            review_form = ReviewForm(request.POST, instance=existing_review)
+            comment_form = CommentForm()
+
+            if review_form.is_valid():
+                review = review_form.save(commit=False)
+                review.user = request.user
+                review.game = game
+                review.save()
+                messages.success(request, 'Your review has been saved.')
+                return redirect('games:game_detail', slug=game.slug)
+
+        elif 'submit_comment' in request.POST:
+            comment_form = CommentForm(request.POST)
+            review_form = ReviewForm(instance=existing_review)
+
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.user = request.user
+                comment.game = game
+                comment.save()
+                messages.success(request, 'Your comment has been added.')
+                return redirect('games:game_detail', slug=game.slug)
+
     return render(request, 'games/game_detail.html', {
         'game': game,
         'images': images,
         'videos': videos,
         'is_dev': is_dev,
+        'reviews': reviews,
+        'comments': comments,
+        'review_form': review_form,
+        'comment_form': comment_form,
     })
+
 
 
 def all_games(request: HttpRequest):
     games = Game.objects.filter(is_active=True)
-    return render(request, 'games/all_games.html', {'games': games})
+
+    genre = request.GET.get('genre')
+    sort = request.GET.get('sort')
+
+    if genre:
+        games = games.filter(genre__id=genre)
+
+    if sort == 'price_low':
+        games = games.order_by('price')
+    elif sort == 'price_high':
+        games = games.order_by('-price')
+    elif sort == 'newest':
+        games = games.order_by('-release_year')
+    elif sort == 'oldest':
+        games = games.order_by('release_year')
+    else:
+        games = games.order_by('title')
+
+    genres = Genre.objects.all().order_by('name')
+
+    page_number = request.GET.get('page',1)
+    paginator = Paginator(games,6)
+    games_page = paginator.get_page(page_number)
+
+    context = {
+        'games': games_page,
+        'genres': genres,
+        'selected_genre': genre,
+        'selected_sort': sort,
+    }
+    return render(request, 'games/all_games.html', context)
