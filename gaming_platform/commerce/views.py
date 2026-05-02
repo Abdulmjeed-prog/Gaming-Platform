@@ -44,7 +44,7 @@ def add_to_cart(request, game_id):
         cart_item.save()
 
     return redirect('commerce:cart_view')
-
+@login_required
 def cart_view(request: HttpRequest):
     cart = Cart.objects.filter(user=request.user).first()
     items = cart.items.all() if cart else []

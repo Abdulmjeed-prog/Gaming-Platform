@@ -12,6 +12,36 @@
         <a href="{% url 'games:create_game' %}" class="btn btn-primary">Create Game</a>
     </div>
 
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-4">
+            <label for="genre" class="form-label">Genre</label>
+            <select name="genre" id="genre" class="form-select">
+                <option value="">All Genres</option>
+                {% for genre in genres %}
+                    <option value="{{ genre.id }}" {% if selected_genre == genre.id|stringformat:"s" %}selected{% endif %}>
+                        {{ genre.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <label for="sort" class="form-label">Sort By</label>
+            <select name="sort" id="sort" class="form-select">
+                <option value="">Title A-Z</option>
+                <option value="price_low" {% if selected_sort == "price_low" %}selected{% endif %}>Price: Low to High</option>
+                <option value="price_high" {% if selected_sort == "price_high" %}selected{% endif %}>Price: High to Low</option>
+                <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Newest</option>
+                <option value="oldest" {% if selected_sort == "oldest" %}selected{% endif %}>Oldest</option>
+            </select>
+        </div>
+
+        <div class="col-md-4 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            <a href="{% url 'games:all_games' %}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+
     <div class="row g-4">
         {% for game in games %}
         <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
