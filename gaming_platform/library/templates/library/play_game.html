@@ -14,24 +14,32 @@
     --accent: #c8f135;
     --text: #e8eaf0;
     --muted: #6b7280;
+    --topbar-h: 46px;
   }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow: hidden; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+  #play-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    z-index: 9999;
   }
 
   .topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 20px;
+    padding: 0 20px;
+    height: var(--topbar-h);
+    min-height: var(--topbar-h);
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
@@ -63,7 +71,7 @@
   .topbar-right {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
   }
 
   .timer-display {
@@ -80,33 +88,50 @@
     color: var(--muted);
   }
 
+  .fullscreen-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .fullscreen-btn:hover { color: var(--text); border-color: #ffffff33; }
+
   .game-frame {
     flex: 1;
     width: 100%;
+    min-height: 0;
     border: none;
     display: block;
     background: #000;
   }
 </style>
 
-<div class="topbar">
-  <div class="topbar-left">
-    <a href="{% url 'library:library_view' %}" class="back-btn">← Library</a>
-    <span class="game-title">{{ game.title }}</span>
+<div id="play-root">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="{% url 'library:library_view' %}" class="back-btn">← Library</a>
+      <span class="game-title">{{ game.title }}</span>
+    </div>
+    <div class="topbar-right">
+      <span class="save-status" id="saveStatus"></span>
+      <span class="timer-display" id="timerDisplay">00:00</span>
+      <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+    </div>
   </div>
-  <div class="topbar-right">
-    <span class="save-status" id="saveStatus"></span>
-    <span class="timer-display" id="timerDisplay">00:00</span>
-  </div>
-</div>
 
-<iframe
-  src="{{ game_url }}"
-  class="game-frame"
-  allowfullscreen
-  allow="fullscreen; autoplay"
-  id="gameFrame"
-></iframe>
+  <iframe
+    src="{{ game_url }}"
+    class="game-frame"
+    id="gameFrame"
+    allowfullscreen
+    allow="fullscreen; autoplay; gamepad"
+  ></iframe>
+</div>
 
 <script>
   const SAVE_URL = "{% url 'library:save_progress' game.slug %}";
@@ -155,5 +180,14 @@
       navigator.sendBeacon(SAVE_URL, body);
     }
   });
+
+  function toggleFullscreen() {
+    const frame = document.getElementById('gameFrame');
+    if (!document.fullscreenElement) {
+      frame.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen();
+    }
+  }
 </script>
 {% endblock %}

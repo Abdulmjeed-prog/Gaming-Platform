@@ -329,10 +329,8 @@
           </div>
 
           <div class="card-footer">
-            {% if item.game.play_url %}
-              <a href="{{ item.game.play_url }}" target="_blank" class="btn-play">▶ Play</a>
-            {% elif item.game.versions.filter.is_active %}
-              <a href="{% url 'games:game_detail' item.game.slug %}" class="btn-play">▶ Play</a>
+            {% if item.is_playable %}
+              <a href="{% url 'library:play_game' item.game.slug %}" class="btn-play">▶ Play</a>
             {% else %}
               <span class="btn-play" style="opacity:0.4;cursor:not-allowed;">Unavailable</span>
             {% endif %}
