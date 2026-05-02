@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title> #codepenchallenge  Batmobile: Gotham City  Game</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Batmobile: Gotham City Pursuit [DELAYED MOBILE]</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Share Tech Mono', monospace;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* --- UNIVERSAL GLASS STYLE --- */
+        .neo-glass {
+            background: rgba(255,255, 255, 0.15);
+            backdrop-filter: blur(10px) saturate(180%);
+            -webkit-backdrop-filter: blur(10px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            color: #e0ffe0;
+        }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 1;
+        }
+
+        #top-hud {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            width: 90%;
+            justify-content: space-between;
+        }
+
+        .hud-panel { 
+            padding: 10px 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-width: 100px; 
+        }
+        .hud-label { font-size: 10px; color: rgba(255, 255, 255, 0.8); letter-spacing: 2px; margin-bottom: 4px; text-shadow: 0 0 2px rgba(0,0,0,0.5); }
+        .hud-value { font-size: 28px; font-weight: bold; text-shadow: 0 0 10px rgba(0, 255, 65, 0.8); }
+
+        /* Life Panel */
+        #life-panel {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            padding: 5px 15px;
+        }
+        .life-pip {
+            width: 15px;
+            height: 6px;
+            background: #00ff41;
+            box-shadow: 0 0 5px #00ff41;
+            transition: background 0.3s;
+        }
+        .life-pip.lost {
+            background: rgba(255, 0, 0, 0.2);
+            box-shadow: none;
+        }
+
+        /* Cheat List - Hide on mobile */
+        #cheat-list {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            pointer-events: none;
+        }
+        .cheat-item {
+            color: #fff;
+            font-size: 11px;
+            letter-spacing: 1px;
+            text-shadow: 0 0 2px #000;
+        }
+        .cheat-code {
+            color: #ffff00;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 255, 0, 0.5);
+        }
+
+        #weapon-system {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            text-align: right;
+            transform: skewX(-10deg);
+            padding: 15px;
+        }
+        .ammo-pip {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: #00ff41;
+            margin-left: 3px;
+            box-shadow: 0 0 5px #00ff41;
+            transition: 0.2s;
+        }
+        .ammo-pip.empty { background: rgba(0,0,0,0.3); box-shadow: none; }
+
+        #dashboard {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            display: flex;
+            align-items: flex-end;
+            gap: 15px;
+            padding: 15px;
+        }
+        .gauge-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #00ff41;
+            border-right: 3px solid #00ff41;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-45deg);
+        }
+        .gauge-inner { transform: rotate(45deg); text-align: center; }
+
+        #nitro-bar-container {
+            width: 250px;
+            height: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #00ff41;
+            transform: skewX(-20deg);
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        #nitro-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #004d00, #00ff41, #fff);
+            transform-origin: left;
+            transition: transform 0.1s;
+        }
+
+        /* --- MOBILE CONTROLS (Hidden on Desktop) --- */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 180px;
+            pointer-events: none; /* Disabled initially */
+            z-index: 20;
+            
+            /* Animation: Opacity 0, Slide Down, Delay 4s */
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUpFade 0.8s ease-out 4s forwards;
+        }
+
+        /* Keyframes for the delay */
+        @keyframes slideUpFade {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mobile-btn {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            font-family: 'Share Tech Mono';
+            pointer-events: none; /* Inherit from parent initially */
+            user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 255, 65, 0.4);
+            transform: scale(0.95);
+        }
+
+        .btn-left { bottom: 40px; left: 30px; }
+        .btn-right { bottom: 40px; left: 130px; }
+        .btn-boost { bottom: 40px; right: 130px; width: 90px; height: 90px; border-radius: 50%; color: #00ffff; }
+        .btn-fire { bottom: 40px; right: 30px; width: 70px; height: 70px; border-radius: 50%; border-color: #ff0055; color: #ff0055; }
+
+        /* Mobile Cheat Input */
+        #mobile-cheat-trigger {
+            display: none;
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 12px;
+            pointer-events: none; /* Inherit from parent */
+            z-index: 30;
+
+            /* Same Animation Delay */
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUpFade 0.8s ease-out 4s forwards;
+        }
+
+        #mobile-cheat-panel {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 100;
+            background: rgba(0,0,0,0.85);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        #mobile-cheat-input {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            padding: 15px;
+            font-size: 20px;
+            font-family: 'Share Tech Mono';
+            width: 80%;
+            max-width: 400px;
+            text-transform: uppercase;
+            text-align: center;
+            outline: none;
+        }
+        .close-cheat {
+            margin-top: 20px;
+            background: transparent;
+            border:1px solid #fff;
+            color: #fff;
+            padding: 10px 30px;
+            font-family: 'Share Tech Mono';
+        }
+
+        /* --- MEDIA QUERIES --- */
+        @media (max-width: 1024px) {
+            #mobile-controls { display: block; }
+            #mobile-cheat-trigger { display: block; }
+            #cheat-list { display: none; }
+            #dashboard { transform: scale(0.8); bottom: 10px; left: 10px; }
+            #weapon-system { transform: scale(0.8); bottom: 10px; right: 10px; }
+        }
+
+        /* --- VIGNETTE & SCANLINES --- */
+        .vignette {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 100%);
+            z-index: 5;
+            pointer-events: none;
+        }
+        .scanlines {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.2));
+            background-size: 100% 4px;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 6;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+        
+        /* Toast Messages */
+        .toast {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            font-size: 24px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-shadow: 0 0 10px currentColor;
+            z-index: 200;
+            pointer-events: none;
+            text-align: center;
+        }
+        .warning-text { color: #ff0055; text-shadow: 0 0 20px #ff0055; font-size: 32px; font-weight: bold; display: none; }
+        
+        #cheat-indicator {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #000;
+            font-size: 14px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-shadow: 0 0 5px #fff;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border: 1px solid #fff;
+            pointer-events: none;
+            white-space: nowrap;
+            box-shadow: 0 0 15px #fff;
+        }
+
+        #game-timer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-size: 12px;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.3);
+            text-shadow: 0 0 5px rgba(0,255,65,0.5);
+        }
+
+        /* --- GAME OVER SCREEN --- */
+        #game-over-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(10px);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+            pointer-events: all;
+        }
+        .go-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 60px;
+            color: #ff0055;
+            text-shadow: 0 0 30px rgba(255, 0, 85, 0.8);
+            margin-bottom: 20px;
+            transform: skewX(-10deg);
+            text-align: center;
+        }
+        
+        .restart-btn {
+            padding: 20px 60px;
+            color: #fff;
+            border: none;
+            font-family: 'Share Tech Mono';
+            font-size: 24px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            transition: 0.3s;
+            text-shadow: 0 0 10px #000;
+            pointer-events: auto;
+        }
+        .restart-btn:hover {
+            background: rgba(255, 255, 255, 0.4); 
+            color: #000;
+            text-shadow: none;
+            box-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+
+    </style>
+    
+    <!-- Three.js & Post Processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div class="vignette"></div>
+    <div class="scanlines"></div>
+
+    <!-- HUD Layer -->
+    <div id="ui-layer">
+        <div id="top-hud">
+            <div class="hud-panel neo-glass">
+                <div class="hud-label">DISTANCE</div>
+                <div class="hud-value" id="score-val">0</div>
+            </div>
+            <div class="hud-panel neo-glass">
+                <div class="hud-label">SYSTEM</div>
+                <div class="hud-value" id="status-val" style="font-size: 18px; color:#00ff41;">ONLINE</div>
+            </div>
+        </div>
+
+        <div id="life-panel" class="neo-glass">
+            <div class="life-pip"></div><div class="life-pip"></div><div class="life-pip"></div>
+            <div class="life-pip"></div><div class="life-pip"></div><div class="life-pip"></div>
+        </div>
+
+        <div id="game-timer">TIME: <span id="time-val">0.0</span>s</div>
+
+        <!-- Desktop Cheat List -->
+        <div id="cheat-list" class="neo-glass">
+            <div class="cheat-item">GOD MODE: <span class="cheat-code">WAYNE</span></div>
+            <div class="cheat-item">INF NITRO: <span class="cheat-code">GOTHAM</span></div>
+            <div class="cheat-item">CHAOS: <span class="cheat-code">JOKER</span></div>
+        </div>
+
+        <div id="dashboard" class="neo-glass">
+            <div class="gauge-circle">
+                <div class="gauge-inner">
+                    <div id="speed-val" class="hud-value">0</div>
+                    <div class="hud-label">MPH</div>
+                </div>
+            </div>
+            <div>
+                <div class="hud-label" style="margin-left:5px;">AFTERBURNER</div>
+                <div id="nitro-bar-container">
+                    <div id="nitro-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="weapon-system" class="neo-glass">
+            <div class="hud-label">BATARANG</div>
+            <div id="ammo-container" style="margin-top: 5px;">
+                <span class="ammo-pip"></span><span class="ammo-pip"></span><span class="ammo-pip"></span>
+            </div>
+        </div>
+
+        <div id="cheat-indicator">CHEAT ACTIVATED</div>
+        <div class="toast warning-text" id="collision-warn">IMPACT DETECTED</div>
+    </div>
+
+    <!-- Mobile Controls Overlay -->
+    <button id="mobile-cheat-trigger" class="neo-glass">CHEAT</button>
+    
+    <div id="mobile-cheat-panel">
+        <div class="hud-label" style="margin-bottom:10px;">TYPE CHEAT CODE</div>
+        <input type="text" id="mobile-cheat-input" placeholder="WAYNE / GOTHAM / JOKER">
+        <button class="close-cheat" id="close-mobile-cheat">CLOSE</button>
+    </div>
+
+    <div id="mobile-controls">
+        <div class="mobile-btn btn-left" id="mob-left">&lt;</div>
+        <div class="mobile-btn btn-right" id="mob-right">&gt;</div>
+        <div class="mobile-btn btn-boost" id="mob-boost">NITRO</div>
+        <div class="mobile-btn btn-fire" id="mob-fire">FIRE</div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen">
+        <div class="go-title">CRITICAL FAILURE</div>
+        <p style="color:#fff; font-family:'Share Tech Mono'; margin-bottom:30px;">HULL INTEGRITY ZERO</p>
+        <button class="restart-btn neo-glass" id="restart-btn">REBOOT SYSTEM</button>
+    </div>
+
+    <script>
+        // --- CONFIG & STATE ---
+        const CONFIG = {
+            laneWidth: 3.5,
+            speed: { base: 0.5, max: 1.2, nitro: 2.2, current: 0.8 },
+            nitro: { amount: 100, drain: 0.8, regen: 0.15 },
+            camera: { shake: 0, fovBase: 70, fovNitro: 100 },
+            cheats: { god: false, infinite: false, chaos: false }
+        };
+
+        const STATE = {
+            playing: true,
+            gameOver: false,
+            score: 0,
+            lives: 6,
+            frame: 0,
+            batarangs: 3,
+            cheatBuffer: "",
+            randomCheatTriggered: false,
+            startTime: 0
+        };
+
+        let activeCheatTimers = { god: null, infinite: null, chaos: null };
+
+        // --- THREE.JS SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x020205, 0.012);
+
+        const camera = new THREE.PerspectiveCamera(CONFIG.camera.fovBase, window.innerWidth/window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 3.5, 9);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        container.appendChild(renderer.domElement);
+
+        // --- POST PROCESSING ---
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.strength = 2.0;
+        bloomPass.radius = 0.6;
+        bloomPass.threshold = 0.15; 
+
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // --- LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        scene.add(ambientLight);
+
+        const cityLight = new THREE.DirectionalLight(0x110022, 0.8);
+        cityLight.position.set(10, 20, 10);
+        scene.add(cityLight);
+
+        // --- ASSETS ---
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.1, metalness: 0.9 });
+        const neonBlue = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        const neonRed = new THREE.MeshBasicMaterial({ color: 0xff0033 });
+        const streetLightMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+        const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffcc }); 
+        const carPaintMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.3, metalness: 0.7 });
+        const tireMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9, metalness: 0.1 });
+
+        // Road
+        const roadGeo = new THREE.PlaneGeometry(30, 400);
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        road.position.z = -100;
+        scene.add(road);
+
+        const stripes = [];
+        for(let i=0; i<12; i++){
+            const sGeo = new THREE.PlaneGeometry(0.2, 5);
+            const sMat = new THREE.MeshBasicMaterial({color: 0x555555});
+            const stripeLeft = new THREE.Mesh(sGeo, sMat);
+            const stripeRight = new THREE.Mesh(sGeo, sMat);
+            stripeLeft.rotation.x = -Math.PI/2;
+            stripeRight.rotation.x = -Math.PI/2;
+            stripeLeft.position.x = -CONFIG.laneWidth/2 - 1.7;
+            stripeRight.position.x = CONFIG.laneWidth/2 + 1.7;
+            scene.add(stripeLeft);
+            scene.add(stripeRight);
+            stripes.push(stripeLeft, stripeRight);
+        }
+
+        // Street Lights
+        const streetLights = [];
+        const lightPoleGeo = new THREE.CylinderGeometry(0.1, 0.1, 10, 8);
+        const lightArmGeo = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
+        const lightBulbGeo = new THREE.BoxGeometry(0.5, 0.2, 0.8);
+
+        function createStreetLight(x, z) {
+            const group = new THREE.Group();
+            const pole = new THREE.Mesh(lightPoleGeo, new THREE.MeshStandardMaterial({color: 0x222222}));
+            pole.position.y = 5;
+            group.add(pole);
+            const arm = new THREE.Mesh(lightArmGeo, new THREE.MeshStandardMaterial({color: 0x222222}));
+            arm.rotation.z = x > 0 ? -Math.PI/4 : Math.PI/4;
+            arm.position.y = 9;
+            arm.position.x = x > 0 ? -1 : 1;
+            group.add(arm);
+            const bulb = new THREE.Mesh(lightBulbGeo, streetLightMat);
+            bulb.position.y = 9.5;
+            bulb.position.x = x > 0 ? -2.2 : 2.2;
+            group.add(bulb);
+            const light = new THREE.PointLight(0xffaa00, 2, 40);
+            light.position.y = 8.5;
+            light.position.x = x > 0 ? -2.2 : 2.2;
+            group.add(light);
+            group.position.set(x, 0, z);
+            scene.add(group);
+            streetLights.push(group);
+        }
+
+        for(let i=0; i<10; i++) {
+            createStreetLight(-8, -i * 40);
+            createStreetLight(8, -i * 40 - 20); 
+        }
+
+        // Buildings (Background)
+        const buildings = [];
+        const buildingGeo = new THREE.BoxGeometry(1, 1, 1);
+        function createBuilding(x, z) {
+            const h = 20 + Math.random() * 50;
+            const w = 6 + Math.random() * 6;
+            const d = 6 + Math.random() * 6;
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.8 });
+            const b = new THREE.Mesh(buildingGeo, mat);
+            b.scale.set(w, h, d);
+            b.position.y = h/2;
+            group.add(b);
+            const winCount = 30;
+            for(let i=0; i<winCount; i++) {
+                const win = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.8), new THREE.MeshBasicMaterial({color: 0xffffaa}));
+                win.position.set((Math.random()-0.5)*w, Math.random()*h, d/2 + 0.05);
+                if(Math.random() > 0.3) group.add(win);
+            }
+            group.position.set(x, 0, z);
+            scene.add(group);
+            buildings.push(group);
+        }
+        for(let i=0; i<30; i++) {
+            createBuilding(-22 - Math.random()*15, -i * 35);
+            createBuilding(22 + Math.random()*15, -i * 35);
+        }
+
+        // Batmobile
+        const carGroup = new THREE.Group();
+        const mainChassis = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.6, 3.8), carPaintMat);
+        mainChassis.position.y = 0.6;
+        carGroup.add(mainChassis);
+        const armor1 = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 1.8), carPaintMat);
+        armor1.position.set(0, 0.8, 0.5);
+        carGroup.add(armor1);
+        const finGeo = new THREE.BoxGeometry(0.5, 0.2, 1.5);
+        const leftFin = new THREE.Mesh(finGeo, carPaintMat);
+        leftFin.position.set(1.4, 0.6, 1.2); leftFin.rotation.z = -0.2; leftFin.rotation.y = 0.2;
+        carGroup.add(leftFin);
+        const rightFin = leftFin.clone();
+        rightFin.position.set(-1.4, 0.6, 1.2); rightFin.rotation.z = 0.2; rightFin.rotation.y = -0.2;
+        carGroup.add(rightFin);
+        const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.8, 2.2, 4), new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.2, metalness: 0.8}));
+        canopy.rotation.x = -Math.PI/2 - 0.1; canopy.position.set(0, 1.1, -0.2); canopy.scale.z = 0.8;
+        carGroup.add(canopy);
+        const burner = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.5, 0.8, 12), new THREE.MeshStandardMaterial({color: 0x222222, metalness: 0.8}));
+        burner.rotation.x = Math.PI/2; burner.position.set(0, 0.6, 2.2);
+        carGroup.add(burner);
+        const flameGeo = new THREE.ConeGeometry(0.3, 2.5, 8);
+        const flameMat = new THREE.MeshBasicMaterial({color: 0x00aaff, transparent: true, opacity: 0.9});
+        const flame = new THREE.Mesh(flameGeo, flameMat);
+        flame.rotation.x = Math.PI/2; flame.position.set(0, 0.6, 3.5); flame.visible = false;
+        carGroup.add(flame);
+
+        // --- HEADLIGHTS (Visual + Light) ---
+        const carLight = new THREE.SpotLight(0xffffcc, 15, 120, 0.6, 0.5, 1);
+        carLight.position.set(0, 2, 0);
+        carLight.target.position.set(0, 0, -20);
+        scene.add(carLight);
+        scene.add(carLight.target);
+
+        const headLightMeshGeo = new THREE.BoxGeometry(0.6, 0.2, 0.1);
+        const headLightLeft = new THREE.Mesh(headLightMeshGeo, headlightMat);
+        headLightLeft.position.set(0.8, 0.7, -1.9);
+        carGroup.add(headLightLeft);
+        const headLightRight = headLightLeft.clone();
+        headLightRight.position.set(-0.8, 0.7, -1.9);
+        carGroup.add(headLightRight);
+
+        const frontWheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.5, 24);
+        const rearWheelGeo = new THREE.CylinderGeometry(0.65, 0.65, 0.8, 24);
+        const fw1 = new THREE.Mesh(frontWheelGeo, tireMat); fw1.rotation.z = Math.PI/2; fw1.position.set(1.4, 0.45, 1.2);
+        const fw2 = new THREE.Mesh(frontWheelGeo, tireMat); fw2.rotation.z = Math.PI/2; fw2.position.set(-1.4, 0.45, 1.2);
+        const rw1 = new THREE.Mesh(rearWheelGeo, tireMat); rw1.rotation.z = Math.PI/2; rw1.position.set(1.0, 0.65, -1.2); 
+        const rw2 = new THREE.Mesh(rearWheelGeo, tireMat); rw2.rotation.z = Math.PI/2; rw2.position.set(-1.0, 0.65, -1.2);
+        carGroup.add(fw1, fw2, rw1, rw2);
+        carGroup.userData.wheels = [fw1, fw2, rw1, rw2];
+        scene.add(carGroup);
+
+        // Enemies
+        const enemies = [];
+        function spawnEnemy() {
+            if(STATE.gameOver) return;
+            const lane = Math.floor(Math.random() * 3) - 1;
+            const x = lane * CONFIG.laneWidth;
+            const group = new THREE.Group();
+            const color = Math.random() > 0.5 ? 0x660000 : 0x111122; 
+            const enemyMat = new THREE.MeshStandardMaterial({color: color, roughness: 0.2, metalness: 0.6});
+            const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.5, 4.2), enemyMat);
+            lowerBody.position.y = 0.5; group.add(lowerBody);
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.2), new THREE.MeshStandardMaterial({color: 0x111111, roughness: 0.1})); 
+            cabin.position.set(0, 1.0, -0.2); group.add(cabin);
+            const hood = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 1.2), enemyMat); hood.position.set(0, 0.8, 1.5); group.add(hood);
+            const trunk = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 0.8), enemyMat); trunk.position.set(0, 0.8, -1.8); group.add(trunk);
+            const tailLightGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+            const tl1 = new THREE.Mesh(tailLightGeo, neonRed); tl1.position.set(0.6, 0.7, -2.15);
+            const tl2 = new THREE.Mesh(tailLightGeo, neonRed); tl2.position.set(-0.6, 0.7, -2.15);
+            group.add(tl1, tl2);
+            const wheelG = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
+            const wPositions = [ [0.9,0.35,1.2], [-0.9,0.35,1.2], [0.9,0.35,-1.2], [-0.9,0.35,-1.2] ];
+            group.userData.wheels = [];
+            wPositions.forEach(pos => {
+                const w = new THREE.Mesh(wheelG, tireMat); w.rotation.z = Math.PI/2; w.position.set(...pos); group.add(w); group.userData.wheels.push(w);
+            });
+            group.position.set(x, 0, -250);
+            scene.add(group);
+            enemies.push(group);
+        }
+
+        const projectiles = [];
+        const batrangGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.1, 3);
+        const particles = [];
+        const particleGeo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+        
+        function createExplosion(pos, color) {
+            for(let i=0; i<30; i++) {
+                const mesh = new THREE.Mesh(particleGeo, new THREE.MeshBasicMaterial({color: color}));
+                mesh.position.copy(pos);
+                mesh.userData.vel = new THREE.Vector3((Math.random() - 0.5) * 1.5, (Math.random() * 1.0) + 0.5, (Math.random() - 0.5) * 1.5);
+                scene.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // --- GAME LOGIC ---
+        let playerX = 0;
+        let playerVelX = 0;
+        const keys = { w:false, a:false, s:false, d:false, space:false };
+
+        // --- MOBILE TOUCH LOGIC ---
+        const mobLeft = document.getElementById('mob-left');
+        const mobRight = document.getElementById('mob-right');
+        const mobBoost = document.getElementById('mob-boost');
+        const mobFire = document.getElementById('mob-fire');
+        const mobileCheatInput = document.getElementById('mobile-cheat-input');
+        const mobileCheatPanel = document.getElementById('mobile-cheat-panel');
+        const mobControls = document.getElementById('mobile-controls');
+        const mobCheatTrigger = document.getElementById('mobile-cheat-trigger');
+
+        // DELAYED INTERACTION: Enable pointer events after 4 seconds
+        setTimeout(() => {
+            mobControls.style.pointerEvents = 'all';
+            Array.from(mobControls.children).forEach(btn => btn.style.pointerEvents = 'auto');
+            
+            mobCheatTrigger.style.pointerEvents = 'all';
+        }, 4000);
+
+        // Touch Bindings
+        function bindTouch(elem, keyStart, keyEnd) {
+            elem.addEventListener('touchstart', (e) => { 
+                e.preventDefault(); 
+                if(keyStart === 'a') keys.a = true;
+                if(keyStart === 'd') keys.d = true;
+                if(keyStart === ' ') keys.space = true;
+                if(keyStart === 'f') fireWeapon();
+            });
+            elem.addEventListener('touchend', (e) => { 
+                e.preventDefault();
+                if(keyEnd === 'a') keys.a = false;
+                if(keyEnd === 'd') keys.d = false;
+                if(keyEnd === ' ') keys.space = false;
+            });
+        }
+
+        bindTouch(mobLeft, 'a', 'a');
+        bindTouch(mobRight, 'd', 'd');
+        bindTouch(mobBoost, ' ', ' ');
+        bindTouch(mobFire, 'f', 'f');
+
+        // Mobile Cheat Trigger
+        document.getElementById('mobile-cheat-trigger').addEventListener('click', () => {
+            mobileCheatPanel.style.display = 'flex';
+            mobileCheatInput.value = "";
+            mobileCheatInput.focus();
+        });
+
+        document.getElementById('close-mobile-cheat').addEventListener('click', () => {
+            mobileCheatPanel.style.display = 'none';
+            mobileCheatInput.blur();
+        });
+
+        // Mobile Cheat Input Logic
+        mobileCheatInput.addEventListener('input', (e) => {
+            const val = e.target.value.toUpperCase();
+            // Check cheats immediately as they type
+            if(val.includes("WAYNE")) {
+                triggerCheat('god', 'GOD MODE');
+                e.target.value = "";
+            }
+            if(val.includes("GOTHAM")) {
+                triggerCheat('infinite', 'INFINITE NITRO');
+                e.target.value = "";
+            }
+            if(val.includes("JOKER")) {
+                triggerCheat('chaos', 'CHAOS MODE');
+                e.target.value = "";
+            }
+        });
+
+        // --- UI UPDATERS ---
+        function updateLifeUI() {
+            const pips = document.querySelectorAll('.life-pip');
+            pips.forEach((pip, index) => {
+                if(index < STATE.lives) {
+                    pip.classList.remove('lost');
+                } else {
+                    pip.classList.add('lost');
+                }
+            });
+        }
+
+        // --- CHEAT MANAGER ---
+        function triggerCheat(type, name) {
+            CONFIG.cheats[type] = true;
+            
+            if(type === 'chaos') {
+                scene.fog.color.setHex(0x220033);
+                ambientLight.color.setHex(0x00ff00);
+            }
+            if(type === 'god' || (type === 'chaos' && CONFIG.cheats.god)) {
+                document.getElementById('status-val').innerText = type === 'god' ? "GOD MODE" : "JOKER VENOM";
+                document.getElementById('status-val').style.color = type === 'god' ? "#ffff00" : "#ff00ff";
+            }
+
+            if(activeCheatTimers[type]) clearTimeout(activeCheatTimers[type]);
+
+            const el = document.getElementById('cheat-indicator');
+            el.innerText = `${name} ACTIVATED [25s]`;
+            el.style.opacity = 1;
+            el.style.animation = "blink 0.5s infinite";
+
+            let secondsLeft = 25;
+            const countdownInterval = setInterval(() => {
+                secondsLeft--;
+                el.innerText = `${name} [${secondsLeft}s]`;
+                if(secondsLeft <= 0) clearInterval(countdownInterval);
+            }, 1000);
+
+            activeCheatTimers[type] = setTimeout(() => {
+                CONFIG.cheats[type] = false;
+                clearInterval(countdownInterval);
+                
+                if(type === 'chaos') {
+                    scene.fog.color.setHex(0x020205);
+                    ambientLight.color.setHex(0x404040);
+                    if(!CONFIG.cheats.god) {
+                        document.getElementById('status-val').innerText = "ONLINE";
+                        document.getElementById('status-val').style.color = "#00ff41";
+                    } else {
+                         document.getElementById('status-val').innerText = "GOD MODE";
+                         document.getElementById('status-val').style.color = "#ffff00";
+                    }
+                }
+                if(type === 'god' && !CONFIG.cheats.chaos) {
+                    document.getElementById('status-val').innerText = "ONLINE";
+                    document.getElementById('status-val').style.color = "#00ff41";
+                }
+
+                el.innerText = `${name} DEACTIVATED`;
+                setTimeout(() => { 
+                    el.style.opacity = 0; 
+                    el.style.animation = "none";
+                }, 2000);
+
+            }, 25000);
+        }
+
+        // --- DESKTOP KEYBOARD EVENTS ---
+        document.addEventListener('keydown', (e) => {
+            if(STATE.gameOver) return;
+            const k = e.key.toLowerCase();
+            if(k === 'a' || k === 'arrowleft') keys.a = true;
+            if(k === 'd' || k === 'arrowright') keys.d = true;
+            if(k === ' ') keys.space = true;
+            if(k === 'f') fireWeapon();
+
+            STATE.cheatBuffer += k;
+            if(STATE.cheatBuffer.length > 15) STATE.cheatBuffer = STATE.cheatBuffer.slice(-15);
+
+            if(STATE.cheatBuffer.toLowerCase().includes("wayne")) {
+                triggerCheat('god', 'GOD MODE');
+                STATE.cheatBuffer = "";
+            }
+            if(STATE.cheatBuffer.toLowerCase().includes("gotham")) {
+                triggerCheat('infinite', 'INFINITE NITRO');
+                STATE.cheatBuffer = "";
+            }
+            if(STATE.cheatBuffer.toLowerCase().includes("joker")) {
+                triggerCheat('chaos', 'CHAOS MODE');
+                STATE.cheatBuffer = "";
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            const k = e.key.toLowerCase();
+            if(k === 'a' || k === 'arrowleft') keys.a = false;
+            if(k === 'd' || k === 'arrowright') keys.d = false;
+            if(k === ' ') keys.space = false;
+        });
+
+        function fireWeapon() {
+            if(STATE.batarangs > 0) {
+                STATE.batarangs--;
+                updateAmmo();
+                const p = new THREE.Mesh(batrangGeo, neonBlue);
+                p.rotation.x = Math.PI/2;
+                p.position.copy(carGroup.position);
+                p.position.y = 1;
+                scene.add(p);
+                projectiles.push(p);
+                if(STATE.batarangs === 2) setTimeout(reloadAmmo, 2000);
+            }
+        }
+
+        function reloadAmmo() {
+            if(STATE.batarangs < 3) {
+                STATE.batarangs++;
+                updateAmmo();
+                if(STATE.batarangs < 3) setTimeout(reloadAmmo, 2000);
+            }
+        }
+
+        function updateAmmo() {
+            const container = document.getElementById('ammo-container');
+            container.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                const pip = document.createElement('span');
+                pip.className = i < STATE.batarangs ? 'ammo-pip' : 'ammo-pip empty';
+                container.appendChild(pip);
+            }
+        }
+
+        // --- GAME OVER & RESTART ---
+        function gameOver() {
+            STATE.playing = false;
+            STATE.gameOver = true;
+            document.getElementById('game-over-screen').style.display = 'flex';
+        }
+
+        function restartGame() {
+            STATE.playing = true;
+            STATE.gameOver = false;
+            STATE.lives = 6;
+            STATE.score = 0;
+            STATE.randomCheatTriggered = false;
+            STATE.startTime = clock.getElapsedTime(); 
+            
+            updateLifeUI();
+            
+            CONFIG.speed.current = CONFIG.speed.base;
+            playerX = 0;
+            playerVelX = 0;
+            carGroup.position.x = 0;
+
+            enemies.forEach(e => scene.remove(e));
+            enemies.length = 0;
+            
+            projectiles.forEach(p => scene.remove(p));
+            projectiles.length = 0;
+
+            document.getElementById('game-over-screen').style.display = 'none';
+        }
+
+        document.getElementById('restart-btn').addEventListener('click', restartGame);
+        setInterval(spawnEnemy, 1500);
+
+        // --- MAIN LOOP ---
+        const clock = new THREE.Clock();
+        STATE.startTime = clock.getElapsedTime(); 
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+            const playTime = time - STATE.startTime; 
+
+            document.getElementById('time-val').innerText = playTime.toFixed(1);
+
+            // --- RANDOM CHEAT LOGIC (45s) ---
+            if(!STATE.randomCheatTriggered && playTime > 45) {
+                STATE.randomCheatTriggered = true;
+                const cheats = [
+                    {key: 'god', name: 'AUTO: GOD MODE'},
+                    {key: 'infinite', name: 'AUTO: INFINITE NITRO'},
+                    {key: 'chaos', name: 'AUTO: CHAOS MODE'}
+                ];
+                const pick = cheats[Math.floor(Math.random() * cheats.length)];
+                triggerCheat(pick.key, pick.name);
+            }
+
+            // --- SHARED WORLD UPDATES ---
+            carGroup.position.y = Math.sin(time * 20) * 0.02;
+            let activeSpeed = STATE.playing ? CONFIG.speed.current : 0; 
+            const moveSpeed = activeSpeed * 80 * delta;
+            
+            stripes.forEach(s => { s.position.z += moveSpeed; if(s.position.z > 20) s.position.z -= 120; });
+            streetLights.forEach(sl => { sl.position.z += moveSpeed; if(sl.position.z > 20) sl.position.z -= 400; });
+            
+            buildings.forEach(b => {
+                b.position.z += moveSpeed;
+                if(b.position.z > 50) b.position.z = -600; 
+                if(CONFIG.cheats.chaos) {
+                    b.rotation.y += 0.02;
+                    b.rotation.z = Math.sin(time * 5 + b.position.z) * 0.1;
+                } else {
+                    b.rotation.y *= 0.9;
+                    b.rotation.z *= 0.9;
+                }
+            });
+
+            // --- GAMEPLAY MODE ---
+            if(STATE.playing && !STATE.gameOver) {
+                if(keys.a) playerVelX -= 60 * delta;
+                if(keys.d) playerVelX += 60 * delta;
+                playerVelX *= 0.92; 
+                playerX += playerVelX * delta;
+                const limit = CONFIG.laneWidth * 1.6;
+                if(playerX > limit) { playerX = limit; playerVelX = 0; }
+                if(playerX < -limit) { playerX = -limit; playerVelX = 0; }
+
+                carGroup.position.x = playerX;
+                carGroup.rotation.z = -playerVelX * 0.03; 
+                carGroup.rotation.y = -playerVelX * 0.015;
+                carGroup.userData.wheels.forEach(w => w.rotation.x += activeSpeed * 0.5);
+            }
+
+            // Nitro
+            let isBoosting = false;
+            const nitroAvailable = CONFIG.nitro.amount > 0 || CONFIG.cheats.infinite;
+            if(keys.space && nitroAvailable && STATE.playing) {
+                isBoosting = true;
+                CONFIG.speed.current = THREE.MathUtils.lerp(CONFIG.speed.current, CONFIG.speed.nitro, 0.08);
+                if(!CONFIG.cheats.infinite) CONFIG.nitro.amount -= CONFIG.nitro.drain;
+                else CONFIG.nitro.amount = 100; 
+                CONFIG.camera.shake = 0.3;
+                camera.fov = THREE.MathUtils.lerp(camera.fov, CONFIG.camera.fovNitro, 0.05);
+            } else {
+                CONFIG.speed.current = THREE.MathUtils.lerp(CONFIG.speed.current, CONFIG.speed.base, 0.04);
+                if(!CONFIG.cheats.infinite) CONFIG.nitro.amount = Math.min(100, CONFIG.nitro.amount + CONFIG.nitro.regen);
+                camera.fov = THREE.MathUtils.lerp(camera.fov, CONFIG.camera.fovBase, 0.05);
+            }
+            camera.updateProjectionMatrix();
+
+            document.getElementById('nitro-fill').style.transform = `scaleX(${CONFIG.nitro.amount / 100})`;
+            document.getElementById('speed-val').innerText = Math.floor(CONFIG.speed.current * 180 + Math.random()*5);
+            STATE.score += Math.floor(CONFIG.speed.current * 2);
+            document.getElementById('score-val').innerText = STATE.score;
+
+            flame.visible = isBoosting;
+            if(isBoosting) {
+                flame.scale.set(1, 1 + Math.random()*0.5, 1);
+                carLight.intensity = 15 + Math.random()*5;
+            } else {
+                carLight.intensity = 15;
+            }
+
+            for(let i=enemies.length-1; i>=0; i--){
+                const e = enemies[i];
+                const enemySpeed = STATE.playing ? CONFIG.speed.current : 0;
+                e.position.z += (enemySpeed * 80 - 25) * delta; 
+                e.userData.wheels.forEach(w => w.rotation.x += 0.3);
+                if(Math.random() < 0.01) e.userData.targetX = (Math.random() - 0.5) * 8;
+                if(e.userData.targetX !== undefined) e.position.x += (e.userData.targetX - e.position.x) * 0.05;
+                if(CONFIG.cheats.chaos) {
+                    e.rotation.y += 0.1;
+                    e.position.x += Math.sin(time * 10) * 0.1;
+                }
+                if(Math.abs(e.position.z - carGroup.position.z) < 3.5 && Math.abs(e.position.x - carGroup.position.x) < 2.0) {
+                    if(!CONFIG.cheats.god && STATE.playing) {
+                        createExplosion(e.position, 0xff0000);
+                        STATE.lives--;
+                        updateLifeUI();
+                        
+                        CONFIG.speed.current *= 0.5; 
+                        CONFIG.camera.shake = 1.2;
+                        document.querySelector('.warning-text').style.display = 'block';
+                        setTimeout(() => document.querySelector('.warning-text').style.display = 'none', 500);
+                        
+                        e.position.z += 15;
+                        e.position.x += (e.position.x > carGroup.position.x) ? 4 : -4;
+                        e.rotation.y += Math.random();
+
+                        if(STATE.lives <= 0) {
+                            gameOver();
+                        }
+                    } else if (CONFIG.cheats.god) {
+                        createExplosion(e.position, 0xffaa00);
+                        scene.remove(e);
+                        enemies.splice(i, 1);
+                        STATE.score += 100;
+                    }
+                }
+                if(e.position.z > 20) {
+                    scene.remove(e);
+                    enemies.splice(i, 1);
+                }
+            }
+
+            for(let i=projectiles.length-1; i>=0; i--) {
+                const p = projectiles[i];
+                p.position.z -= 120 * delta; 
+                p.rotation.y += 15 * delta;
+                let hit = false;
+                for(let j=enemies.length-1; j>=0; j--){
+                    if(p.position.distanceTo(enemies[j].position) < 3) {
+                        createExplosion(enemies[j].position, CONFIG.cheats.chaos ? 0xff00ff : 0xff5500);
+                        scene.remove(enemies[j]);
+                        enemies.splice(j, 1);
+                        hit = true;
+                        STATE.score += 500;
+                        break;
+                    }
+                }
+                if(hit || p.position.z < -300) {
+                    scene.remove(p);
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            for(let i=particles.length-1; i>=0; i--){
+                const p = particles[i];
+                p.position.add(p.userData.vel);
+                p.userData.vel.y -= 0.02; 
+                p.rotation.x += 0.1;
+                p.scale.multiplyScalar(0.92);
+                if(p.scale.x < 0.01) {
+                    scene.remove(p);
+                    particles.splice(i, 1);
+                }
+            }
+
+            const shakeX = (Math.random() - 0.5) * CONFIG.camera.shake;
+            const shakeY = (Math.random() - 0.5) * CONFIG.camera.shake;
+            CONFIG.camera.shake *= 0.9;
+            camera.position.x = THREE.MathUtils.lerp(camera.position.x, playerX * 0.4 + shakeX, 0.1);
+            camera.position.y = 4 + shakeY + Math.abs(playerVelX)*0.02;
+            if(CONFIG.cheats.chaos) camera.position.x += (Math.random()-0.5) * 0.2;
+            camera.position.z = 9 + CONFIG.speed.current * 2;
+            camera.lookAt(playerX * 0.1, 0, -20);
+
+            composer.render();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            bloomPass.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
+    
+  </body>
+  
+</html>

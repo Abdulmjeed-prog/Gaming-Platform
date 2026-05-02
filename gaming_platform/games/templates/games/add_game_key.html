@@ -1,0 +1,26 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Add Key{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h2 class="fw-bold mb-3">Add Key for {{ game.title }}</h2>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Add Key</button>
+                        <a href="{% url 'games:game_detail' slug=game.slug %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

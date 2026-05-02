@@ -13,10 +13,8 @@ urlpatterns = [
     path('<slug:slug>/publish/',views.toggle_publish,name='toggle_publish'),
     path('<slug:slug>/version/<int:version_pk>/activate/',views.set_active_version, name='set_active_version'),
     path('media/<int:pk>/delete/',views.delete_media,name='delete_media'),
-    
     path('<slug:slug>/manage/',  views.game_manage,  name='game_manage'),
     path('<slug:slug>/delete/',  views.delete_game,  name='delete_game'),
- 
-
+    path('<slug:slug>/add-key/', views.add_game_key_view, name='add_game_key'),
 
 ]
