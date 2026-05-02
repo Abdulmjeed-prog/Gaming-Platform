@@ -1,7 +1,8 @@
+from django.utils import timezone
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
-from games.models import Game
+from games.models import Game, GameKey
 from .models import Cart, CartItem,Order, OrderItem, PaymentMethod, StripeCustomer
 import stripe
 from django.conf import settings
@@ -10,6 +11,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.db import transaction
 from library.models import UserGameLibrary
+
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -159,12 +161,17 @@ def my_cards_view(request):
 
 @login_required
 def checkout_view(request: HttpRequest):
+    if not request.user.is_authenticated:
+        messages.error(request, 'You need to log in first.')
+        return redirect('accounts:login_view')
+
     cart = Cart.objects.filter(user=request.user).first()
 
     if not cart or not cart.items.exists():
+        messages.error(request, 'Your cart is empty.')
         return redirect('commerce:cart_view')
 
-    cart_items = cart.items.all()
+    cart_items = cart.items.select_related('game')
     total = sum(item.price * item.quantity for item in cart_items)
     saved_cards = PaymentMethod.objects.filter(user=request.user).order_by('-is_default', '-created_at')
 
@@ -173,7 +180,7 @@ def checkout_view(request: HttpRequest):
 
         if not payment_method_id:
             messages.error(request, 'Please select a card.')
-            return redirect('commerce:checkout')
+            return redirect('commerce:checkout_view')
 
         selected_card = PaymentMethod.objects.filter(
             user=request.user,
@@ -182,9 +189,23 @@ def checkout_view(request: HttpRequest):
 
         if not selected_card:
             messages.error(request, 'Invalid card selected.')
-            return redirect('commerce:checkout')
+            return redirect('commerce:checkout_view')
 
         try:
+            for item in cart_items:
+                if item.game.platform != Game.PlatformChoices.WEB:
+                    available_keys_count = GameKey.objects.filter(
+                        game=item.game,
+                        is_assigned=False
+                    ).count()
+
+                    if available_keys_count < item.quantity:
+                        messages.error(
+                            request,
+                            f"Not enough keys available for {item.game.title}."
+                        )
+                        return redirect('commerce:checkout_view')
+
             payment_intent = stripe.PaymentIntent.create(
                 amount=int(total * 100),
                 currency='usd',
@@ -211,17 +232,34 @@ def checkout_view(request: HttpRequest):
                         quantity=item.quantity
                     )
 
-                    UserGameLibrary.objects.get_or_create(
-                        user=request.user,
-                        game=item.game,
-                        defaults={
-                            'source': 'purchase',
-                            'is_active': True,
-                        }
-                    )
+                    if item.game.platform == Game.PlatformChoices.WEB:
+                        UserGameLibrary.objects.get_or_create(
+                            user=request.user,
+                            game=item.game,
+                            defaults={
+                                'source': 'purchase',
+                                'is_active': True,
+                            }
+                        )
+                    else:
+                        available_keys = GameKey.objects.filter(
+                            game=item.game,
+                            is_assigned=False
+                        ).order_by('id')[:item.quantity]
+
+                        if available_keys.count() < item.quantity:
+                            raise ValueError(f"Not enough keys available for {item.game.title}")
+
+                        for game_key in available_keys:
+                            game_key.user = request.user
+                            game_key.order = order
+                            game_key.is_assigned = True
+                            game_key.assigned_at = timezone.now()
+                            game_key.save()
 
                 cart.items.all().delete()
 
+            messages.success(request, 'Payment completed successfully.')
             return redirect('commerce:order_success', order_id=order.id)
 
         except stripe.error.CardError as e:
@@ -233,11 +271,11 @@ def checkout_view(request: HttpRequest):
                 transaction_id=''
             )
             messages.error(request, f"Payment failed: {e.user_message}")
-            return redirect('commerce:checkout')
+            return redirect('commerce:checkout_view')
 
         except Exception as e:
             messages.error(request, f"Something went wrong: {str(e)}")
-            return redirect('commerce:checkout')
+            return redirect('commerce:checkout_view')
 
     return render(request, 'commerce/checkout.html', {
         'items': cart_items,

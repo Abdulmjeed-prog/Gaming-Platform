@@ -1,8 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
-
+from django.contrib.auth.models import User
 from django.conf import settings
-
 
 
 class Genre(models.Model):
@@ -134,3 +133,22 @@ class GameVersion(models.Model):
     def __str__(self):
         return f'{self.game.title} v{self.version_number}'
  
+
+class GameKey(models.Model):
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='keys')
+    key = models.CharField(max_length=100, unique=True)
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    order = models.ForeignKey('commerce.Order', on_delete=models.SET_NULL, null=True, blank=True)
+
+    is_assigned = models.BooleanField(default=False)
+    is_redeemed = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    assigned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.game.title} - {self.key}"

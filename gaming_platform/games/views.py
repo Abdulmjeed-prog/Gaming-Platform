@@ -11,6 +11,8 @@ from django.core.paginator import Paginator
 from social.forms import CommentForm, ReviewForm
 from social.models import Comment, Review
 from django.contrib import messages
+from .forms import GameKeyForm
+from .models import Game, GameKey
 
 
 def extract_game_zip(zip_file_field, slug):
@@ -48,8 +50,8 @@ def owns_game(user, game):
 
 @login_required
 def create_game(request: HttpRequest):
-    if not request.user.groups.filter(name='Developer').exists():
-        return HttpResponseForbidden()
+    #if not request.user.groups.filter(name='Developer').exists():
+        #return HttpResponseForbidden()
 
     if request.method == 'POST':
         game_form = GameForm(request.POST, request.FILES)
@@ -344,3 +346,26 @@ def all_games(request: HttpRequest):
         'selected_sort': sort,
     }
     return render(request, 'games/all_games.html', context)
+
+
+
+@login_required
+def add_game_key_view(request, slug):
+    game = get_object_or_404(Game, slug=slug)
+
+    if request.method == 'POST':
+        form = GameKeyForm(request.POST)
+        if form.is_valid():
+            game_key = form.save(commit=False)
+            game_key.game = game
+            game_key.save()
+            messages.success(request, 'Game key added successfully.')
+            return redirect('games:game_detail', slug=game.slug)
+    else:
+        form = GameKeyForm()
+
+    return render(request, 'games/add_game_key.html', {
+        'game': game,
+        'form': form,
+    })
+

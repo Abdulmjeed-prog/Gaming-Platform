@@ -30,3 +30,18 @@ class GameVersionForm(forms.ModelForm):
     class Meta:
         model = GameVersion
         fields = ['version_number', 'file', 'entry_point', 'changelog']
+
+
+from django import forms
+from .models import GameKey
+
+class GameKeyForm(forms.ModelForm):
+    class Meta:
+        model = GameKey
+        fields = ['key']
+        widgets = {
+            'key': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter redeem key'
+            })
+        }
