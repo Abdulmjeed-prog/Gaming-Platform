@@ -1,5 +1,6 @@
 from django.db import models
-from accounts.models import User
+from accounts.models import User, DeveloperProfile
+
 
 class Notification(models.Model):
     TYPE_CHOICES = (
@@ -18,3 +19,20 @@ class Notification(models.Model):
 
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class DeveloperAnnouncement(models.Model):
+    developer = models.ForeignKey(
+        DeveloperProfile,
+        on_delete=models.CASCADE,
+        related_name='announcements'
+    )
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
