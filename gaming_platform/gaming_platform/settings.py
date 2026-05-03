@@ -48,7 +48,8 @@ INSTALLED_APPS = [
     'library',
     'moderation',
     'notifications',
-    'social'
+    'social',
+    'dashboard'
 ]
 
 MIDDLEWARE = [

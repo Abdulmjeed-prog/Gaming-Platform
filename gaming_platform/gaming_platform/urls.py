@@ -30,5 +30,6 @@ urlpatterns = [
     path('moderation/', include('moderation.urls')),
     path('notifications/', include('notifications.urls')),
     path('social/', include('social.urls')),
+    path('dashboard/', include('dashboard.urls')),
 
 ] + static(settings.MEDIA_URL, document_root = settings.MEDIA_ROOT)

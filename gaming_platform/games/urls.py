@@ -16,5 +16,4 @@ urlpatterns = [
     path('<slug:slug>/manage/',  views.game_manage,  name='game_manage'),
     path('<slug:slug>/delete/',  views.delete_game,  name='delete_game'),
     path('<slug:slug>/add-key/', views.add_game_key_view, name='add_game_key'),
-
 ]
