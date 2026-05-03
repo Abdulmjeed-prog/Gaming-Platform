@@ -1,0 +1,140 @@
+{% extends 'main/base.html' %}
+
+{% block title %}My Orders{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="mb-4">
+        <h1 class="fw-bold mb-1">My Orders</h1>
+        <p class="text-muted mb-0">View your purchases, access web games, and find your redeem keys.</p>
+    </div>
+
+    {% if orders %}
+        <div class="row g-4">
+            {% for order in orders %}
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                        <div class="card-body p-4">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                                <div>
+                                    <h5 class="fw-bold mb-1">Order #{{ order.id }}</h5>
+                                    <p class="text-muted mb-1">
+                                        Placed on {{ order.created_at|date:"M d, Y - h:i A" }}
+                                    </p>
+                                    {% if order.transaction_id %}
+                                        <small class="text-muted">Transaction ID: {{ order.transaction_id }}</small>
+                                    {% endif %}
+                                </div>
+
+                                <div class="text-md-end">
+                                    <span class="badge fs-6 px-3 py-2
+                                        {% if order.status == 'paid' %}bg-success
+                                        {% elif order.status == 'failed' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ order.status|title }}
+                                    </span>
+                                    <div class="mt-2 fw-bold fs-5">
+                                        ${{ order.total_amount }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                {% for item in order.items.all %}
+                                    <div class="col-12">
+                                        <div class="border rounded-4 p-3 bg-light-subtle">
+                                            <div class="row align-items-center g-3">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        {% if item.game.cover %}
+                                                            <img src="{{ item.game.cover.url }}"
+                                                                 alt="{{ item.game.title }}"
+                                                                 class="rounded"
+                                                                 width="72"
+                                                                 height="72"
+                                                                 style="object-fit: cover;">
+                                                        {% endif %}
+
+                                                        <div>
+                                                            <h6 class="fw-bold mb-1">{{ item.game.title }}</h6>
+                                                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                                                <span class="badge text-bg-dark">{{ item.game.platform }}</span>
+
+                                                                {% if item.game.platform == 'WEB' %}
+                                                                    <span class="badge text-bg-primary">Web Game</span>
+                                                                {% else %}
+                                                                    <span class="badge text-bg-warning">Key Game</span>
+                                                                {% endif %}
+                                                            </div>
+                                                            <small class="text-muted">
+                                                                Unit Price: ${{ item.price }} | Qty: {{ item.quantity }}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <div class="text-muted small">Subtotal</div>
+                                                    <div class="fw-semibold">${{ item.price }}</div>
+                                                </div>
+
+                                                <div class="col-md-3 text-md-end">
+                                                    {% if item.game.platform == 'WEB' %}
+                                                        <a href="{% url 'games:game_detail' item.game.slug %}" class="btn btn-primary btn-sm">
+                                                            View Game
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+
+                                            {% if item.game.platform != 'WEB' %}
+                                                <div class="mt-3 pt-3 border-top">
+                                                    <div class="fw-semibold mb-2">Redeem Keys</div>
+
+                                                    {% with found_key=False %}
+                                                        {% for game_key in order.gamekey_set.all %}
+                                                            {% if game_key.game_id == item.game.id %}
+                                                                <div class="card border-warning-subtle bg-white mb-2">
+                                                                    <div class="card-body py-2 px-3">
+                                                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                                                            <div>
+                                                                                <small class="text-muted d-block">Your key</small>
+                                                                                <code class="fs-6">{{ game_key.key }}</code>
+                                                                            </div>
+                                                                            <div class="text-end">
+                                                                                {% if game_key.is_redeemed %}
+                                                                                    <span class="badge text-bg-success">Redeemed</span>
+                                                                                {% else %}
+                                                                                    <span class="badge text-bg-warning">Not Redeemed</span>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% empty %}
+                                                            <p class="text-muted small mb-0">No key assigned yet.</p>
+                                                        {% endfor %}
+                                                    {% endwith %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-5 text-center">
+                <h4 class="fw-bold mb-2">No orders yet</h4>
+                <p class="text-muted mb-3">You have not purchased any games yet.</p>
+                <a href="{% url 'games:all_games' %}" class="btn btn-primary">Browse Games</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

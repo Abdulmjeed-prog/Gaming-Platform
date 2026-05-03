@@ -15,6 +15,10 @@ from django.utils import timezone
 from library.models import UserGameLibrary
 from analytics.models import GameAnalytics,DeveloperEarnings
 from accounts.models import DeveloperProfile
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -25,7 +29,21 @@ def commerce_view(request):
 
 @login_required
 def add_to_cart(request, game_id):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request, 'You are not allowed.')
+        return redirect('main:home_view')
+
     game = get_object_or_404(Game, id=game_id)
+
+    already_owned = UserGameLibrary.objects.filter(
+        user=request.user,
+        game=game,
+        is_active=True
+    ).exists()
+
+    if already_owned:
+        messages.warning(request, 'You already own this game.')
+        return redirect('games:game_detail', slug=game.slug)
 
     try:
         quantity = int(request.POST.get('quantity', 1))
@@ -34,23 +52,37 @@ def add_to_cart(request, game_id):
     except (TypeError, ValueError):
         quantity = 1
 
+    if game.platform == Game.PlatformChoices.WEB:
+        quantity = 1
+
     cart, created = Cart.objects.get_or_create(user=request.user)
 
     cart_item, item_created = CartItem.objects.get_or_create(
         cart=cart,
         game=game,
-        defaults={'price': game.price, 'quantity': quantity}
+        defaults={
+            'price': game.price,
+            'quantity': quantity
+        }
     )
 
     if not item_created:
+        if game.platform == Game.PlatformChoices.WEB:
+            messages.info(request, 'Web games can only have quantity 1.')
+            return redirect('commerce:cart_view')
+
         cart_item.quantity += quantity
         cart_item.save()
 
+    messages.success(request, f'{game.title} added to cart.')
     return redirect('commerce:cart_view')
 
 
 @login_required
 def cart_view(request: HttpRequest):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request,'You are not allowed')
+        return redirect('main:home_view')
     cart = Cart.objects.filter(user=request.user).first()
     items = cart.items.all() if cart else []
     total = sum(item.price * item.quantity for item in items)
@@ -61,10 +93,41 @@ def cart_view(request: HttpRequest):
     })
 
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+
+from library.models import UserGameLibrary
+from .models import CartItem
+from games.models import Game
+
+
 @login_required
 def increase_quantity(request, item_id):
     if request.method == 'POST':
-        item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        item = get_object_or_404(
+            CartItem,
+            id=item_id,
+            cart__user=request.user
+        )
+
+        already_owned = UserGameLibrary.objects.filter(
+            user=request.user,
+            game=item.game,
+            is_active=True
+        ).exists()
+
+        if already_owned:
+            messages.warning(request, 'You already own this game.')
+            item.delete()
+            return redirect('commerce:cart_view')
+
+        if item.game.platform == Game.PlatformChoices.WEB:
+            messages.info(request, 'Web games can only have quantity 1.')
+            item.quantity = 1
+            item.save()
+            return redirect('commerce:cart_view')
+
         item.quantity += 1
         item.save()
 
@@ -74,7 +137,27 @@ def increase_quantity(request, item_id):
 @login_required
 def decrease_quantity(request, item_id):
     if request.method == 'POST':
-        item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        item = get_object_or_404(
+            CartItem,
+            id=item_id,
+            cart__user=request.user
+        )
+
+        already_owned = UserGameLibrary.objects.filter(
+            user=request.user,
+            game=item.game,
+            is_active=True
+        ).exists()
+
+        if already_owned:
+            messages.warning(request, 'You already own this game.')
+            item.delete()
+            return redirect('commerce:cart_view')
+
+        if item.game.platform == Game.PlatformChoices.WEB:
+            item.delete()
+            messages.info(request, 'Web games can only have quantity 1, so the item was removed from your cart.')
+            return redirect('commerce:cart_view')
 
         if item.quantity > 1:
             item.quantity -= 1
@@ -83,7 +166,6 @@ def decrease_quantity(request, item_id):
             item.delete()
 
     return redirect('commerce:cart_view')
-
 
 @login_required
 def remove_from_cart(request, item_id):
@@ -111,6 +193,9 @@ def get_or_create_stripe_customer(user):
 
 @login_required
 def add_card_view(request):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request,'You are not allowed')
+        return redirect('main:home_view')
     stripe_customer_id = get_or_create_stripe_customer(request.user)
 
     setup_intent = stripe.SetupIntent.create(
@@ -155,6 +240,9 @@ def save_card_success(request):
 
 @login_required
 def my_cards_view(request):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request,'You are not allowed')
+        return redirect('main:home_view')
     cards = PaymentMethod.objects.filter(user=request.user).order_by('-is_default', '-created_at')
     return render(request, 'commerce/my_cards.html', {'cards': cards})
 
@@ -190,6 +278,9 @@ def _record_sale(item, today):
 
 @login_required
 def checkout_view(request: HttpRequest):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request,'You are not allowed')
+        return redirect('main:home_view')
     if not request.user.is_authenticated:
         messages.error(request, 'You need to log in first.')
         return redirect('accounts:login_view')
@@ -291,7 +382,7 @@ def checkout_view(request: HttpRequest):
                     _record_sale(item, today)
 
                 cart.items.all().delete()
-
+                send_order_confirmation_email(request, order)
             messages.success(request, 'Payment completed successfully.')
             return redirect('commerce:order_success', order_id=order.id)
 
@@ -319,5 +410,30 @@ def checkout_view(request: HttpRequest):
 
 @login_required
 def order_success(request, order_id):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request,'You are not allowed')
+        return redirect('main:home_view')
     order = get_object_or_404(Order, id=order_id, user=request.user)
     return render(request, 'commerce/order_success.html', {'order': order})
+    
+def send_order_confirmation_email(request, order):
+    subject = f"Order Confirmation #{order.id}"
+
+    html_message = render_to_string('commerce/emails/order_confirmation.html', {
+        'user': request.user,
+        'order': order,
+    })
+    plain_message = strip_tags(html_message)
+
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[request.user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+
+
+
+

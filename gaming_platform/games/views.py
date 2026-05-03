@@ -50,8 +50,8 @@ def owns_game(user, game):
 
 @login_required
 def create_game(request: HttpRequest):
-    #if not request.user.groups.filter(name='Developer').exists():
-        #return HttpResponseForbidden()
+    if not request.user.groups.filter(name='Developer').exists():
+        return HttpResponseForbidden()
 
     if request.method == 'POST':
         game_form = GameForm(request.POST, request.FILES)
@@ -314,6 +314,9 @@ def game_detail(request: HttpRequest, slug):
 
 
 def all_games(request: HttpRequest):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request,'You are not allowed')
+        return redirect('main:home_view')
     games = Game.objects.filter(is_active=True)
 
     genre = request.GET.get('genre')

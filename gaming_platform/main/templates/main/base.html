@@ -57,6 +57,9 @@
                             <li>
                                 <a class="dropdown-item" href="{% url 'accounts:profile_view' %}">My Profile</a>
                             </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'accounts:my_orders_view' %}">My Orders</a>
+                            </li>
                             {% if user.groups.all.0.name == 'Developer' %}
                             <li>
                                 <a class="dropdown-item" href="{% url 'accounts:developer_profile' user.username %}">Dev Profile</a>

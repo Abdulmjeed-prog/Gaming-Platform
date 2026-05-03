@@ -1,0 +1,37 @@
+<h2>Thank you for your order, {{ user.username }}!</h2>
+
+<p>Your payment was completed successfully.</p>
+
+<p><strong>Order ID:</strong> #{{ order.id }}</p>
+<p><strong>Total:</strong> ${{ order.total_amount }}</p>
+<p><strong>Status:</strong> {{ order.status|title }}</p>
+
+<h3>Items</h3>
+<ul>
+    {% for item in order.items.all %}
+        <li style="margin-bottom: 12px;">
+            <strong>{{ item.game.title }}</strong> - ${{ item.price }} x {{ item.quantity }}
+
+            {% if item.game.platform != 'WEB' %}
+                <div style="margin-top: 6px;">
+                    <strong>Your Key(s):</strong>
+                    <ul>
+                        {% for game_key in order.gamekey_set.all %}
+                            {% if game_key.game_id == item.game.id %}
+                                <li>
+                                    <code>{{ game_key.key }}</code>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+{% if order.transaction_id %}
+<p><strong>Transaction ID:</strong> {{ order.transaction_id }}</p>
+{% endif %}
+
+<p>Thank you for using Gaming Platform.</p>

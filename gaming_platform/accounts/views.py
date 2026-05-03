@@ -10,7 +10,11 @@ from django.db.models import Sum
 from .forms import ProfileForm, CustomUserCreationForm, CustomUserUpdateForm, DeveloperProfileForm
 from .models import Profile, DeveloperProfile, FollowDeveloper
 from notifications.forms import AnnouncementForm
-
+from commerce.models import Order
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.conf import settings
 
 def signup_view(request: HttpRequest):
     if request.user.is_authenticated:
@@ -24,6 +28,7 @@ def signup_view(request: HttpRequest):
                 profile = profile_form.save(commit=False)
                 profile.user = new_user
                 profile_form.save()
+                send_welcome_email(new_user)
                 messages.success(request, "You have been register")
             return redirect('accounts:login_view')
         else:
@@ -81,9 +86,9 @@ def login_view(request: HttpRequest):
         )
         if user:
             login(request, user)
-            if request.user.groups.filter(name='Developer'):
+            if request.user.groups.filter(name='Developer').exists():
                 messages.success(request, "Logged in successufly")
-                return redirect('games:all_games')
+                return redirect('main:home_view')
             messages.success(request, "Logged in successufly")
             return redirect('main:home_view')
         else:
@@ -199,3 +204,42 @@ def follow_toggle_view(request: HttpRequest, developer_id):
         follow.delete()
 
     return redirect('accounts:developer_profile', username=dev_profile.user.username)
+
+
+@login_required
+def my_orders_view(request):
+    if request.user.groups.filter(name='Developer').exists():
+        messages.warning(request, 'You are not allowed')
+        return redirect('main:home_view')
+
+    orders = (
+        Order.objects
+        .filter(user=request.user)
+        .prefetch_related('items__game', 'gamekey_set__game')
+        .order_by('-created_at')
+    )
+
+    return render(request, 'accounts/my_orders.html', {
+        'orders': orders,
+    })
+
+
+def send_welcome_email(user):
+    if not user.email:
+        return
+
+    subject = 'Welcome to Gaming Platform'
+
+    html_message = render_to_string('accounts/emails/welcome_email.html', {
+        'user': user,
+    })
+    plain_message = strip_tags(html_message)
+
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
