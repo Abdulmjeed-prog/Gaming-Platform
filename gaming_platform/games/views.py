@@ -5,15 +5,14 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import HttpRequest, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from .models import Game, GameMedia, GameVersion, Genre
-from .forms import GameForm, GameVersionForm
+from django.db import transaction
+from django.contrib import messages
 from django.core.paginator import Paginator
+from .models import Game, GameMedia, GameVersion, Genre, GameKey
+from .forms import GameForm, GameVersionForm, GameKeyForm
+from .decorators import developer_required
 from social.forms import CommentForm, ReviewForm
 from social.models import Comment, Review
-from django.contrib import messages
-from .forms import GameKeyForm
-from .models import Game, GameKey
-
 
 def extract_game_zip(zip_file_field, slug):
     extract_to = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
@@ -40,54 +39,59 @@ def extract_game_zip(zip_file_field, slug):
                     zf.extract(member, extract_to)
 
 
-def is_developer(user):
-    return user.groups.filter(name='developer').exists()
-
-
 def owns_game(user, game):
     return game.developer_id == user.pk
 
 
-@login_required
+@developer_required
 def create_game(request: HttpRequest):
-    #if not request.user.groups.filter(name='Developer').exists():
-        #return HttpResponseForbidden()
 
     if request.method == 'POST':
         game_form = GameForm(request.POST, request.FILES)
         version_form = GameVersionForm(request.POST, request.FILES)
-        has_version = bool(request.POST.get('version_number'))
 
+        has_version = bool(request.POST.get('version_number') or request.FILES.get('file'))
         game_valid = game_form.is_valid()
         version_valid = version_form.is_valid() if has_version else True
 
+        if game_valid:
+            play_url = game_form.cleaned_data.get('play_url')
+            version_has_file = has_version and version_valid and version_form.cleaned_data.get('file')
+            if not play_url and not version_has_file:
+                game_form.add_error(None, 'Provide a Play URL or upload a game zip file.')
+                game_valid = False
+
         if game_valid and version_valid:
-            game = game_form.save(commit=False)
-            game.developer = request.user
+            with transaction.atomic():
+                game = game_form.save(commit=False)
+                game.developer = request.user
+                game.is_active = False
+                req_text = game_form.cleaned_data.get('requirements_text', '')
+                requirements = {}
+                for line in req_text.strip().splitlines():
+                    if ':' in line:
+                        key, val = line.split(':', 1)
+                        requirements[key.strip()] = val.strip()
+                game.requirements = requirements or None
+                game.save()
+                game_form.save_m2m()
 
-            req_text = game_form.cleaned_data.get('requirements_text', '')
-            requirements = {}
-            for line in req_text.strip().splitlines():
-                if ':' in line:
-                    key, val = line.split(':', 1)
-                    requirements[key.strip()] = val.strip()
-            game.requirements = requirements or None
-            game.save()
-            game_form.save_m2m()
+                version = None
+                if has_version:
+                    version = version_form.save(commit=False)
+                    version.game = game
+                    version.is_active = True
+                    version.save()
 
-            if has_version:
-                version = version_form.save(commit=False)
-                version.game = game
-                version.is_active = True
-                version.save()
-                if version.file:
-                    extract_game_zip(version.file, game.slug)
+                for f in request.FILES.getlist('images'):
+                    GameMedia.objects.create(game=game, media_type='image', file=f, title=f.name)
+                for f in request.FILES.getlist('videos'):
+                    GameMedia.objects.create(game=game, media_type='video', file=f, title=f.name)
 
-            for f in request.FILES.getlist('images'):
-                GameMedia.objects.create(game=game, media_type='image', file=f, title=f.name)
-            for f in request.FILES.getlist('videos'):
-                GameMedia.objects.create(game=game, media_type='video', file=f, title=f.name)
+            if version and version.file:
+                extract_game_zip(version.file, game.slug)
 
+            messages.success(request, f'"{game.title}" created. Publish it when ready.')
             return redirect('games:game_manage', slug=game.slug)
     else:
         game_form = GameForm()
@@ -368,4 +372,3 @@ def add_game_key_view(request, slug):
         'game': game,
         'form': form,
     })
-
