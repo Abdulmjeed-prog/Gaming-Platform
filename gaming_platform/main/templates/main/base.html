@@ -4,105 +4,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %}</title>
-
+    <title>{% block title %}Gaming Platform{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'js/script.js' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="{% url 'main:home_view' %}">
-            Gaming Platform
+<nav class="navbar" id="main-navbar">
+    <div class="navbar-inner">
+
+        <a href="{% url 'main:home_view' %}" class="navbar-logo">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <polygon points="4,24 14,4 24,24 18,24 14,14 10,24" fill="var(--accent)"/>
+            </svg>
+            <span class="logo-text">GAMING<br>PLATFORM</span>
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
-                aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <div class="navbar-platforms">
+            <a href="{% url 'games:all_games' %}" class="platform-link">All Games</a>
+            <a href="{% url 'games:all_games' %}?platform=PC" class="platform-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                PC
+            </a>
+            <a href="{% url 'games:all_games' %}?platform=WEB" class="platform-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+                Browser
+            </a>
+        </div>
 
-        <div class="collapse navbar-collapse" id="mainNavbar">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'main:home_view' %}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'games:all_games' %}">Games</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'games:create_game' %}">Create Game</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'commerce:cart_view' %}">Cart</a>
-                </li>
-                 <li>
-                    <a class="nav-link" href="{% url 'library:library_view' %}">Library</a>
-                </li>
-            </ul>
-
-            <div class="d-flex align-items-center gap-2">
-                {% if user.is_authenticated %}
-                    <div class="dropdown">
-                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                            Hi, {{ user.username }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:profile_view' %}">My Profile</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:my_orders_view' %}">My Orders</a>
-                            </li>
-                            {% if user.groups.all.0.name == 'Developer' %}
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:developer_profile' user.username %}">Dev Profile</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{% url 'accounts:developer_dashboard' %}">Dashboard</a>
-                            </li>
-                            {% endif %}
-                            <li>
-                                <a class="dropdown-item" href="{% url 'games:create_game' %}">Create Game</a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{% url 'accounts:logout_view' %}">Logout</a>
-                            </li>
-                        </ul>
-                    </div>
-                {% else %}
-                    <a href="{% url 'accounts:login_view' %}" class="btn btn-outline-light btn-sm">Login</a>
-                    <a href="{% url 'accounts:signup_view' %}" class="btn btn-primary btn-sm">Sign Up</a>
-                {% endif %}
+        <div class="navbar-actions">
+            <div class="search-wrap">
+                <button class="icon-btn" id="search-toggle" aria-label="Search">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                </button>
+                <form class="search-form" id="search-form" action="{% url 'games:all_games' %}" method="get">
+                    <input type="text" name="q" class="search-input" id="search-input" placeholder="Search games...">
+                </form>
             </div>
 
+            {% if user.is_authenticated and not user.groups.all.0.name == 'Developer' %}
+            <a href="{% url 'commerce:cart_view' %}" class="icon-btn cart-btn" aria-label="Cart">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+                {% if cart_count > 0 %}
+                <span class="cart-badge">{{ cart_count }}</span>
+                {% endif %}
+            </a>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <div class="user-menu-wrap">
+                <button class="user-btn" id="user-menu-toggle">
+                    <div class="user-avatar">{{ user.username|first|upper }}</div>
+                </button>
+                <div class="user-dropdown" id="user-dropdown">
+                    <div class="dropdown-header">{{ user.username }}</div>
+                    <a href="{% url 'accounts:profile_view' %}" class="dropdown-item">My Profile</a>
+                    <a href="{% url 'accounts:my_orders_view' %}" class="dropdown-item">My Orders</a>
+                    {% if not user.groups.all.0.name == 'Developer' %}
+                    <a href="{% url 'library:library_view' %}" class="dropdown-item">Library</a>
+                    {% endif %}
+                    {% if user.groups.all.0.name == 'Developer' %}
+                    <a href="{% url 'accounts:developer_profile' user.username %}" class="dropdown-item">Dev Profile</a>
+                    <a href="{% url 'accounts:developer_dashboard' %}" class="dropdown-item">Dashboard</a>
+                    <a href="{% url 'games:create_game' %}" class="dropdown-item">Create Game</a>
+                    {% endif %}
+                    <div class="dropdown-divider"></div>
+                    <a href="{% url 'accounts:logout_view' %}" class="dropdown-item dropdown-item--danger">Logout</a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'accounts:login_view' %}" class="btn-outline-nav">Login</a>
+            <a href="{% url 'accounts:signup_view' %}" class="btn-accent-nav">Sign Up</a>
+            {% endif %}
         </div>
+
     </div>
 </nav>
+
 {% if messages %}
-<div class="container mt-3">
+<div class="messages-container">
     {% for message in messages %}
-        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+    <div class="message message--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+        {{ message }}
+        <button class="message-close" onclick="this.parentElement.remove()">×</button>
+    </div>
     {% endfor %}
 </div>
 {% endif %}
 
-<main class="py-4">
-    {% block content %}
-    {% endblock %}
+<main>
+    {% block content %}{% endblock %}
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/script.js' %}"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

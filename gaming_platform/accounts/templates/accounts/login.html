@@ -1,19 +1,42 @@
 {% extends "main/base.html" %}
 
-{% block content  %}
-<form method="POST">
-    {% csrf_token %}
+{% block title %}Login{% endblock %}
 
-    <div class="form-group mb-3">
-        <label for="id_username">Username</label>
-        <input type="text" class="form-control" id="id_username" name="username" placeholder="Enter username">
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+                <polygon points="4,24 14,4 24,24 18,24 14,14 10,24" fill="var(--accent)"/>
+            </svg>
+            <span style="font-size:13px;font-weight:800;letter-spacing:0.08em;">GAMING PLATFORM</span>
+        </div>
+
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Log in to your account to continue</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="field-group">
+                <label class="field-label" for="id_username">Username</label>
+                <input type="text" class="field-input" id="id_username" name="username"
+                       placeholder="Enter your username" autocomplete="username">
+            </div>
+            <div class="field-group">
+                <label class="field-label" for="id_password">Password</label>
+                <input type="password" class="field-input" id="id_password" name="password"
+                       placeholder="Enter your password" autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-primary-accent" style="width:100%;margin-top:8px;">
+                Log In
+            </button>
+        </form>
+
+        <div class="auth-switch">
+            Don't have an account? <a href="{% url 'accounts:signup_view' %}">Sign up</a>
+        </div>
+
     </div>
-
-    <div class="form-group mb-3">
-        <label for="id_password">Password</label>
-        <input type="password" class="form-control" id="id_password" name="password" placeholder="Enter password">
-    </div>
-
-    <button type="submit" class="btn btn-primary">Login</button>
-</form>
-{% endblock  %}
+</div>
+{% endblock %}

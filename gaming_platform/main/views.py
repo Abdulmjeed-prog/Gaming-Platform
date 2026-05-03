@@ -1,29 +1,25 @@
 from django.shortcuts import render, redirect
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest
 from games.models import Game, Genre
 
+
 def home_view(request: HttpRequest):
-    featured_games = (
+    hero_games = (
         Game.objects
-        .filter(is_active=True)
-        .select_related('developer')
+        .filter(is_active=True, is_featured=True)
         .prefetch_related('genre')
-        .order_by('-created_at')[:4]
+        .order_by('-created_at')[:6]
     )
 
-    latest_games = (
+    trending_games = (
         Game.objects
         .filter(is_active=True)
-        .select_related('developer')
         .prefetch_related('genre')
-        .order_by('-created_at')[:8]
+        .order_by('-trending_score', '-avg_rating')[:6]
     )
-
-    genres = Genre.objects.all().order_by('name')[:6]
 
     context = {
-        'featured_games': featured_games,
-        'latest_games': latest_games,
-        'genres': genres,
+        'hero_games': hero_games,
+        'trending_games': trending_games,
     }
     return render(request, 'main/home.html', context)
