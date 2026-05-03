@@ -7,15 +7,27 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="mb-0">Create Game</h2>
+                <a href="{% url 'accounts:developer_dashboard' %}" class="btn btn-outline-secondary btn-sm">Back</a>
+            </div>
+
+            <div class="alert alert-info">
+                Games are saved as drafts. Publish from the manage page once ready.
+            </div>
+
             <div class="card shadow-sm border-0">
                 <div class="card-body p-4">
-                    <h2 class="mb-4">Create Game</h2>
-
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
 
                         {% if game_form.non_field_errors %}
-                            <div class="alert alert-danger">{{ game_form.non_field_errors }}</div>
+                            <div class="alert alert-danger">
+                                {% for error in game_form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
                         {% endif %}
 
                         <h5 class="mb-3">Game Info</h5>
@@ -46,7 +58,7 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="{{ game_form.price.id_for_label }}" class="form-label">Price</label>
+                                <label for="{{ game_form.price.id_for_label }}" class="form-label">Price ($)</label>
                                 {{ game_form.price }}
                                 {% for error in game_form.price.errors %}
                                     <div class="text-danger small">{{ error }}</div>
@@ -95,23 +107,18 @@
                             {% endfor %}
                         </div>
 
+                        <hr>
+                        <h5 class="mb-1">How Players Launch the Game</h5>
+                        <p class="text-muted small mb-3">Provide a Play URL or upload a zip file. At least one is required.</p>
+
                         <div class="mb-3">
                             <label for="{{ game_form.play_url.id_for_label }}" class="form-label">Play URL</label>
                             {{ game_form.play_url }}
-                            <div class="form-text">External URL if not uploading a file.</div>
+                            <div class="form-text">External hosted URL, if not uploading a file.</div>
                             {% for error in game_form.play_url.errors %}
                                 <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
-
-                        <div class="form-check mb-4">
-                            {{ game_form.is_active }}
-                            <label for="{{ game_form.is_active.id_for_label }}" class="form-check-label">Active</label>
-                        </div>
-
-                        <hr>
-                        <h5 class="mb-3">Initial Version</h5>
-                        <p class="text-muted small">Required if not using a Play URL.</p>
 
                         {% if version_form.non_field_errors %}
                             <div class="alert alert-danger">{{ version_form.non_field_errors }}</div>
@@ -136,19 +143,16 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="{{ version_form.file.id_for_label }}" class="form-label">Game File</label>
+                            <label for="{{ version_form.file.id_for_label }}" class="form-label">Game File <span class="text-muted small">.zip only</span></label>
                             {{ version_form.file }}
                             {% for error in version_form.file.errors %}
                                 <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-4">
                             <label for="{{ version_form.changelog.id_for_label }}" class="form-label">Changelog</label>
                             {{ version_form.changelog }}
-                            {% for error in version_form.changelog.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
                         </div>
 
                         <hr>
@@ -170,6 +174,7 @@
                     </form>
                 </div>
             </div>
+
         </div>
     </div>
 </div>

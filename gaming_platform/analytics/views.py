@@ -20,7 +20,7 @@ def game_analytics(request: HttpRequest, slug):
 
     sales = OrderItem.objects.filter(
         game=game,
-        order__status='completed',
+        order__status='paid',
     ).aggregate(
         total_revenue=Sum('price'),
         total_units=Count('id'),
