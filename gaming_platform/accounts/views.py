@@ -28,7 +28,7 @@ def signup_view(request: HttpRequest):
                 new_user = user_form.save()
                 profile = profile_form.save(commit=False)
                 profile.user = new_user
-                profile_form.save()
+                profile.save()
                 send_welcome_email(new_user)
                 messages.success(request, "You have been register")
             return redirect('accounts:login_view')

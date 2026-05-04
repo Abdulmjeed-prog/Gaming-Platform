@@ -14,32 +14,72 @@ from .decorators import developer_required
 from social.forms import CommentForm, ReviewForm
 from social.models import Comment, Review
 from django.db.models import Q, Sum
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 
+
+
+# def extract_game_zip(zip_file_field, slug):
+#     extract_to = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
+#     if extract_to.exists():
+#         shutil.rmtree(extract_to)
+#     extract_to.mkdir(parents=True, exist_ok=True)
+
+#     with zipfile.ZipFile(zip_file_field.path, 'r') as zf:
+#         names = [n for n in zf.namelist() if not n.startswith('__MACOSX')]
+#         top_dirs = {Path(n).parts[0] for n in names if Path(n).parts}
+
+#         if len(top_dirs) == 1:
+#             prefix = list(top_dirs)[0] + '/'
+#             for member in zf.infolist():
+#                 if member.filename.startswith('__MACOSX'):
+#                     continue
+#                 if member.filename.startswith(prefix):
+#                     member.filename = member.filename[len(prefix):]
+#                 if member.filename:
+#                     zf.extract(member, extract_to)
+#         else:
+#             for member in zf.infolist():
+#                 if not member.filename.startswith('__MACOSX'):
+#                     zf.extract(member, extract_to)
 
 def extract_game_zip(zip_file_field, slug):
-    extract_to = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
-    if extract_to.exists():
-        shutil.rmtree(extract_to)
-    extract_to.mkdir(parents=True, exist_ok=True)
+    uploaded_paths = []
 
-    with zipfile.ZipFile(zip_file_field.path, 'r') as zf:
-        names = [n for n in zf.namelist() if not n.startswith('__MACOSX')]
-        top_dirs = {Path(n).parts[0] for n in names if Path(n).parts}
+    zip_file_field.open("rb")
+    try:
+        with zipfile.ZipFile(zip_file_field, "r") as zf:
+            names = [n for n in zf.namelist() if not n.startswith("__MACOSX")]
+            top_dirs = {Path(n).parts[0] for n in names if Path(n).parts}
 
-        if len(top_dirs) == 1:
-            prefix = list(top_dirs)[0] + '/'
+            prefix = list(top_dirs)[0] + "/" if len(top_dirs) == 1 else ""
+
             for member in zf.infolist():
-                if member.filename.startswith('__MACOSX'):
+                if member.filename.startswith("__MACOSX"):
                     continue
-                if member.filename.startswith(prefix):
-                    member.filename = member.filename[len(prefix):]
-                if member.filename:
-                    zf.extract(member, extract_to)
-        else:
-            for member in zf.infolist():
-                if not member.filename.startswith('__MACOSX'):
-                    zf.extract(member, extract_to)
+
+                filename = member.filename
+                if prefix and filename.startswith(prefix):
+                    filename = filename[len(prefix):]
+
+                if not filename or member.is_dir():
+                    continue
+
+                safe_path = Path(filename)
+                if safe_path.is_absolute() or ".." in safe_path.parts:
+                    continue
+
+                with zf.open(member) as src:
+                    content = src.read()
+
+                storage_path = f"games/extracted/{slug}/{filename}"
+                saved_path = default_storage.save(storage_path, ContentFile(content))
+                uploaded_paths.append(saved_path)
+    finally:
+        zip_file_field.close()
+
+    return uploaded_paths
 
 
 def owns_game(user, game):

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.db.models import Prefetch
 from games.models import Game, GameMedia
@@ -67,3 +67,25 @@ def home_view(request: HttpRequest):
         'recommended_games': recommended_games,
     }
     return render(request, 'main/home.html', context)
+
+
+
+# views.py
+from .forms import UploadTestForm
+
+def upload_test_view(request):
+    if request.method == 'POST':
+        form = UploadTestForm(request.POST, request.FILES)
+        print("FILES:", request.FILES)
+        print("POST:", request.POST)
+
+        if form.is_valid():
+            obj = form.save()
+            print("saved:", obj.id, obj.test_file.name)
+            return redirect('test.html')
+        else:
+            print("errors:", form.errors)
+    else:
+        form = UploadTestForm()
+
+    return render(request, 'main/test.html', {'form': form})

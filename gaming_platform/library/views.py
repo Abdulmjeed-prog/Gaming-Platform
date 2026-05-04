@@ -10,6 +10,9 @@ from django.views.decorators.http import require_POST
 from django.views.static import serve as static_serve
 from games.models import Game, GameVersion
 from .models import UserGameLibrary, UserGameProgress
+import mimetypes
+from django.core.files.storage import default_storage
+from django.http import FileResponse, Http404, HttpResponse
 
 
 @login_required
@@ -74,26 +77,51 @@ def _exempt(response):
     return response
 
 
+# @login_required
+# def serve_game_file(request: HttpRequest, slug, path):
+#     game = get_object_or_404(Game, slug=slug)
+#     get_object_or_404(UserGameLibrary, user=request.user, game=game, is_active=True)
+
+#     document_root = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
+
+#     # security: block path traversal
+#     try:
+#         resolved = (document_root / path).resolve()
+#         resolved.relative_to(document_root.resolve())
+#     except (ValueError, OSError):
+#         return _exempt(HttpResponse('forbidden', status=403))
+
+#     if not resolved.exists() or not resolved.is_file():
+#         return _exempt(HttpResponse(
+#             f'Game file not found: {path}', status=404
+#         ))
+
+#     return _exempt(static_serve(request, path, document_root=str(document_root)))
+
 @login_required
 def serve_game_file(request: HttpRequest, slug, path):
-    game = get_object_or_404(Game, slug=slug)
+    game = get_object_or_404(Game, slug=slug, is_active=True)
     get_object_or_404(UserGameLibrary, user=request.user, game=game, is_active=True)
 
-    document_root = Path(settings.MEDIA_ROOT) / 'games' / 'extracted' / slug
+    safe_path = Path(path)
+    if safe_path.is_absolute() or ".." in safe_path.parts:
+        return _exempt(HttpResponse("forbidden", status=403))
 
-    # security: block path traversal
-    try:
-        resolved = (document_root / path).resolve()
-        resolved.relative_to(document_root.resolve())
-    except (ValueError, OSError):
-        return _exempt(HttpResponse('forbidden', status=403))
+    storage_path = f"games/extracted/{slug}/{path}"
 
-    if not resolved.exists() or not resolved.is_file():
-        return _exempt(HttpResponse(
-            f'Game file not found: {path}', status=404
-        ))
+    if not default_storage.exists(storage_path):
+        return _exempt(HttpResponse(f"Game file not found: {path}", status=404))
 
-    return _exempt(static_serve(request, path, document_root=str(document_root)))
+    content_type, encoding = mimetypes.guess_type(path)
+    content_type = content_type or "application/octet-stream"
+
+    file_obj = default_storage.open(storage_path, "rb")
+    response = FileResponse(file_obj, content_type=content_type)
+
+    if encoding:
+        response["Content-Encoding"] = encoding
+
+    return _exempt(response)
 
 
 @require_POST

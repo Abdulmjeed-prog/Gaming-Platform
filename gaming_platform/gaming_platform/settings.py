@@ -14,7 +14,12 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
 load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -146,3 +151,28 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
+
+
+
+AWS_ACCESS_KEY_ID = "db446c27604682349df4f2cfdefbc142"
+AWS_SECRET_ACCESS_KEY = "957b693ecbaf7d93fd56412633e05b1bb7b9a891e50d253d4f709fd647765c93"
+AWS_STORAGE_BUCKET_NAME = "gaming-platform"
+AWS_S3_ENDPOINT_URL = "https://a29f8d379d0a258ba0505038534d4b89.r2.cloudflarestorage.com"
+
+AWS_S3_REGION_NAME = None
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = True
+AWS_S3_FILE_OVERWRITE = True
+AWS_S3_ADDRESSING_STYLE = "path"
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
