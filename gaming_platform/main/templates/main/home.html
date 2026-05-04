@@ -133,6 +133,75 @@
     </section>
     {% endif %}
 
+    {% if bestsellers %}
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Bestsellers</h2>
+            <a href="{% url 'games:all_games' %}" class="section-link">
+                See all
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+        </div>
+
+        <div class="bs-carousel" id="bs-carousel">
+            <div class="bs-carousel-track" id="bs-carousel-track">
+                {% for game in bestsellers %}
+                <div class="bs-carousel-slide">
+                    {% if game.cover %}
+                    <img src="{{ game.cover.url }}" alt="{{ game.title }}" class="bs-carousel-img">
+                    {% else %}
+                    <div class="bs-carousel-placeholder"></div>
+                    {% endif %}
+                    <div class="bs-carousel-overlay">
+                        <div class="bs-carousel-info">
+                            <span class="bs-carousel-badge">#{{ forloop.counter }} Bestseller</span>
+                            <h3 class="bs-carousel-title">{{ game.title }}</h3>
+                            <div class="bs-carousel-meta">
+                                <span class="bs-carousel-price">${{ game.price }}</span>
+                                <span class="bs-carousel-revenue">{{ game.units_sold }} sold</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if bestsellers|length > 1 %}
+            <button class="bs-carousel-btn bs-carousel-btn--prev" id="bs-prev" aria-label="Previous">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="bs-carousel-btn bs-carousel-btn--next" id="bs-next" aria-label="Next">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <div class="bs-carousel-dots" id="bs-dots">
+                {% for game in bestsellers %}
+                <button class="bs-carousel-dot {% if forloop.first %}bs-carousel-dot--active{% endif %}" data-index="{{ forloop.counter0 }}"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bs-games-row">
+            {% for game in bestsellers %}
+            {% include "main/_game_card.html" with game=game %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if last_seen %}
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Last Seen</h2>
+        </div>
+        <div class="games-grid">
+            {% for game in last_seen %}
+            {% include "main/_game_card.html" with game=game %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
 </div>
 
 {% endblock %}

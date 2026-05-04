@@ -1,9 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpRequest
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Count, Sum, Q, DecimalField, Value
+from django.db.models.functions import Coalesce
 from games.models import Game, GameMedia
 from library.models import UserGameLibrary
 from social.models import Review
+
+LAST_SEEN_SESSION_KEY = 'last_seen'
 
 
 def _video_prefetch():
@@ -12,6 +15,37 @@ def _video_prefetch():
         queryset=GameMedia.objects.filter(media_type='video').order_by('order'),
         to_attr='preview_videos',
     )
+
+
+def get_bestsellers():
+    from commerce.models import OrderItem
+    paid = Q(orderitem__order__status='paid')
+    return (
+        Game.objects
+        .filter(is_active=True)
+        .annotate(
+            units_sold=Count('orderitem', filter=paid, distinct=True),
+            total_revenue=Coalesce(
+                Sum('orderitem__price', filter=paid),
+                Value(0, output_field=DecimalField(max_digits=12, decimal_places=2))
+            )
+        )
+        .prefetch_related('genre', _video_prefetch())
+        .order_by('-total_revenue', '-price')[:5]
+    )
+
+
+def get_last_seen(request):
+    seen_ids = request.session.get(LAST_SEEN_SESSION_KEY, [])
+    if not seen_ids:
+        return []
+    games = (
+        Game.objects
+        .filter(id__in=seen_ids, is_active=True)
+        .prefetch_related('genre', _video_prefetch())
+    )
+    games_map = {g.id: g for g in games}
+    return [games_map[gid] for gid in seen_ids if gid in games_map]
 
 
 def home_view(request: HttpRequest):
@@ -69,10 +103,15 @@ def home_view(request: HttpRequest):
         .order_by('?')[:6]
     )
 
+    bestsellers = list(get_bestsellers())
+    last_seen = get_last_seen(request)
+
     context = {
         'hero_games': hero_games,
         'trending_games': trending_games,
         'recommended_games': recommended_games,
         'recent_reviews': recent_reviews,
+        'bestsellers': bestsellers,
+        'last_seen': last_seen,
     }
     return render(request, 'main/home.html', context)

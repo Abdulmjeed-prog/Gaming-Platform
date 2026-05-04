@@ -1,3 +1,20 @@
+// navbar scroll transparency
+(function () {
+    var navbar = document.getElementById('main-navbar');
+    if (!navbar) return;
+
+    function onScroll() {
+        if (window.scrollY > 10) {
+            navbar.classList.add('navbar--scrolled');
+        } else {
+            navbar.classList.remove('navbar--scrolled');
+        }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll(); // run on load in case page is already scrolled
+})();
+
 document.addEventListener('DOMContentLoaded', function () {
 
     // search toggle
@@ -36,11 +53,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // carousel auto-init
+    // hero carousel
     const track = document.getElementById('carousel-track');
     if (track) {
         const count = track.querySelectorAll('.carousel-slide').length;
         initCarousel(count);
+    }
+
+    // bestsellers carousel
+    const bsTrack = document.getElementById('bs-carousel-track');
+    if (bsTrack) {
+        const bsCount = bsTrack.querySelectorAll('.bs-carousel-slide').length;
+        initBsCarousel(bsCount);
     }
 
 });
@@ -87,6 +111,50 @@ function initCarousel(count) {
 
     startAuto();
 }
+
+
+function initBsCarousel(count) {
+    if (count < 2) return;
+
+    const track = document.getElementById('bs-carousel-track');
+    const dots = document.querySelectorAll('.bs-carousel-dot');
+    const prevBtn = document.getElementById('bs-prev');
+    const nextBtn = document.getElementById('bs-next');
+
+    let current = 0;
+    let timer;
+
+    function goTo(index) {
+        current = (index + count) % count;
+        track.style.transform = 'translateX(-' + (current * 100) + '%)';
+        dots.forEach(function (d, i) {
+            d.classList.toggle('bs-carousel-dot--active', i === current);
+        });
+    }
+
+    function startAuto() {
+        timer = setInterval(function () { goTo(current + 1); }, 5000);
+    }
+
+    function resetAuto() {
+        clearInterval(timer);
+        startAuto();
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function () { goTo(current - 1); resetAuto(); });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function () { goTo(current + 1); resetAuto(); });
+    }
+
+    dots.forEach(function (dot, i) {
+        dot.addEventListener('click', function () { goTo(i); resetAuto(); });
+    });
+
+    startAuto();
+}
+
 
 // card video hover
 (function () {
