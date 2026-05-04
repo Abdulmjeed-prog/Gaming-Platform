@@ -85,26 +85,34 @@ def developer_signup_view(request: HttpRequest):
 def login_view(request: HttpRequest):
     if request.user.is_authenticated:
         return redirect('main:home_view')
+
     if request.method == 'POST':
         user = authenticate(
             request,
             username=request.POST['username'],
             password=request.POST['password']
         )
+
         if user:
             login(request, user)
-            if request.user.developerprofile.is_verified == False:
-                messages.warning(request, 'User is not verified')
-                return redirect('accounts:logout_view')
-            messages.success(request, "Logged in successfully")
-            if request.user.groups.filter(name='Developer').exists():
 
+            if request.user.groups.filter(name='Developer').exists():
+                developer_profile = DeveloperProfile.objects.filter(user=request.user).first()
+
+                if not developer_profile or not developer_profile.is_verified:
+                    messages.warning(request, 'Your developer account is not verified.')
+                    return redirect('accounts:logout_view')
+
+                messages.success(request, "Logged in successfully")
                 return redirect('accounts:developer_dashboard')
+
             if request.user.is_superuser:
+                messages.success(request, "Logged in successfully")
                 return redirect('dashboard:admin_dashboard')
-            
-            
+
+            messages.success(request, "Logged in successfully")
             return redirect('main:home_view')
+
         else:
             messages.error(request, "Your Username or Password is wrong, try again")
 
