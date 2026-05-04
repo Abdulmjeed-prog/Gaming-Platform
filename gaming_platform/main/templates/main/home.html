@@ -5,6 +5,10 @@
 
 {% block content %}
 
+{# ── reusable card macro ── #}
+{% with NOTHING='' %}
+{% endwith %}
+
 <section class="hero-carousel" id="hero-carousel">
     <div class="carousel-track" id="carousel-track">
         {% for game in hero_games %}
@@ -12,12 +16,23 @@
             {% if game.cover %}
             <img src="{{ game.cover.url }}" alt="{{ game.title }}" class="carousel-img">
             {% else %}
-            <div class="carousel-placeholder"></div>
+            <div class="carousel-img carousel-placeholder"></div>
             {% endif %}
+            <div class="carousel-overlay">
+                <div class="carousel-info">
+                    <h2 class="carousel-game-title">{{ game.title }}</h2>
+                    <div class="carousel-price-row">
+                        {% if game.discount_percent %}
+                        <span class="carousel-discount">-{{ game.discount_percent }}%</span>
+                        {% endif %}
+                        <span class="carousel-price">${{ game.price }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
         {% empty %}
         <div class="carousel-slide">
-            <div class="carousel-placeholder"></div>
+            <div class="carousel-img carousel-placeholder"></div>
         </div>
         {% endfor %}
     </div>
@@ -47,35 +62,32 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
             </a>
         </div>
-
         <div class="games-grid">
             {% for game in trending_games %}
-            <a href="{% url 'games:game_detail' game.slug %}" class="game-card">
-                <div class="game-card-cover">
-                    {% if game.cover %}
-                    <img src="{{ game.cover.url }}" alt="{{ game.title }}" class="game-card-img">
-                    {% else %}
-                    <div class="game-card-img game-card-img--placeholder"></div>
-                    {% endif %}
-                </div>
-                <div class="game-card-info">
-                    <span class="game-card-title">{{ game.title }}</span>
-                    <span class="game-card-price">${{ game.price }}</span>
-                </div>
-                {% if game.avg_rating > 0 %}
-                <div class="game-card-rating">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    {{ game.avg_rating }}
-                </div>
-                {% endif %}
-            </a>
+            {% include "main/_game_card.html" with game=game %}
             {% empty %}
             <div class="empty-state">No games available yet.</div>
             {% endfor %}
         </div>
     </section>
 
+    {% if recommended_games %}
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Recommended For You</h2>
+            <a href="{% url 'games:all_games' %}" class="section-link">
+                See all
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+        </div>
+        <div class="games-grid">
+            {% for game in recommended_games %}
+            {% include "main/_game_card.html" with game=game %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
 </div>
 
 {% endblock %}
-
