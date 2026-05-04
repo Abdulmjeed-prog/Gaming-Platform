@@ -86,3 +86,38 @@ function initCarousel(count) {
 
     startAuto();
 }
+
+// card video hover
+(function () {
+    var hoverTimer;
+
+    function initCardVideos() {
+        document.querySelectorAll('.game-card').forEach(function (card) {
+            var video = card.querySelector('.game-card-video');
+            if (!video) return;
+
+            card.addEventListener('mouseenter', function () {
+                hoverTimer = setTimeout(function () {
+                    if (!video.src) {
+                        video.src = video.dataset.src;
+                    }
+                    video.play().then(function () {
+                        video.classList.add('playing');
+                    }).catch(function () {});
+                }, 300);
+            });
+
+            card.addEventListener('mouseleave', function () {
+                clearTimeout(hoverTimer);
+                video.pause();
+                video.classList.remove('playing');
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCardVideos);
+    } else {
+        initCardVideos();
+    }
+})();
