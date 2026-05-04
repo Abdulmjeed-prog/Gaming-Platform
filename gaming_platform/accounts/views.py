@@ -59,7 +59,7 @@ def developer_signup_view(request: HttpRequest):
         if user_form.is_valid() and developer_form.is_valid():
             with transaction.atomic():
                 new_user = user_form.save()
-                developer_group = Group.objects.get(name='Developer')
+                developer_group, create = Group.objects.get_or_create(name='Developer')
                 new_user.groups.add(developer_group)
                 developer_profile = developer_form.save(commit=False)
                 developer_profile.user = new_user
@@ -93,11 +93,16 @@ def login_view(request: HttpRequest):
         )
         if user:
             login(request, user)
+            if request.user.developerprofile.is_verified == False:
+                messages.warning(request, 'User is not verified')
+                return redirect('accounts:logout_view')
             messages.success(request, "Logged in successfully")
             if request.user.groups.filter(name='Developer').exists():
+
                 return redirect('accounts:developer_dashboard')
             if request.user.is_superuser:
                 return redirect('dashboard:admin_dashboard')
+            
             
             return redirect('main:home_view')
         else:
@@ -119,7 +124,7 @@ def is_developer(user):
 def developer_dashboard(request: HttpRequest):
     if not is_developer(request.user):
         return HttpResponseForbidden()
-
+          
     from analytics.models import DeveloperEarnings, GameAnalytics
     from .models import DeveloperProfile
 

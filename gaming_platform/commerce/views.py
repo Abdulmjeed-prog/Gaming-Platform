@@ -296,6 +296,62 @@ def checkout_view(request: HttpRequest):
     saved_cards = PaymentMethod.objects.filter(user=request.user).order_by('-is_default', '-created_at')
 
     if request.method == 'POST':
+        if total == 0:
+            today = timezone.now().date()
+
+            with transaction.atomic():
+                order = Order.objects.create(
+                    user=request.user,
+                    total_amount=total,
+                    status='paid',
+                    payment_method='free',
+                    transaction_id='FREE_ORDER'
+                )
+
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        game=item.game,
+                        price=item.price,
+                        quantity=item.quantity
+                    )
+
+                    if item.game.platform == Game.PlatformChoices.WEB:
+                        UserGameLibrary.objects.get_or_create(
+                            user=request.user,
+                            game=item.game,
+                            defaults={
+                                'source': 'purchase',
+                                'is_active': True,
+                            }
+                        )
+                    else:
+                        available_keys = GameKey.objects.filter(
+                            game=item.game,
+                            is_assigned=False
+                        ).order_by('id')[:item.quantity]
+
+                        if available_keys.count() < item.quantity:
+                            raise ValueError(f"Not enough keys available for {item.game.title}")
+
+                        for game_key in available_keys:
+                            game_key.user = request.user
+                            game_key.order = order
+                            game_key.is_assigned = True
+                            game_key.assigned_at = timezone.now()
+                            game_key.save()
+
+                    _record_sale(item, today)
+
+                cart.items.all().delete()
+
+                try:
+                    send_order_confirmation_email(request, order)
+                except:
+                    pass
+
+            messages.success(request, 'Free game added successfully.')
+            return redirect('commerce:order_success', order_id=order.id)
         payment_method_id = request.POST.get('payment_method')
 
         if not payment_method_id:
