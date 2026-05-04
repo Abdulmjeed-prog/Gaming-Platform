@@ -27,18 +27,16 @@ class GameForm(forms.ModelForm):
             'price',
             'publisher',
             'release_year',
-            'platform',
             'cover',
             'play_url',
         ]
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'genre': forms.SelectMultiple(attrs={'class': 'form-select'}),
+            'genre': forms.CheckboxSelectMultiple(),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'price': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'publisher': forms.TextInput(attrs={'class': 'form-control'}),
             'release_year': forms.NumberInput(attrs={'class': 'form-control'}),
-            'platform': forms.Select(attrs={'class': 'form-select'}),
             'cover': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'play_url': forms.URLInput(attrs={'class': 'form-control'}),
         }

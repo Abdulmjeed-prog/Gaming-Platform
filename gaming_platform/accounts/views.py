@@ -300,8 +300,7 @@ def follow_toggle_view(request: HttpRequest, developer_id):
 @login_required
 def my_orders_view(request):
     if request.user.groups.filter(name='Developer').exists():
-        messages.warning(request, 'You are not allowed')
-        return redirect('main:home_view')
+        return redirect('accounts:developer_dashboard')
 
     orders = (
         Order.objects

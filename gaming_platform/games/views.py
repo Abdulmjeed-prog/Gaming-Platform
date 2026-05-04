@@ -78,6 +78,7 @@ def create_game(request: HttpRequest):
                 game = game_form.save(commit=False)
                 game.developer = request.user
                 game.is_active = False
+                game.platform = Game.PlatformChoices.WEB
                 req_text = game_form.cleaned_data.get('requirements_text', '')
                 requirements = {}
                 for line in req_text.strip().splitlines():
@@ -145,6 +146,7 @@ def edit_game(request: HttpRequest, slug):
                     key, val = line.split(':', 1)
                     requirements[key.strip()] = val.strip()
             updated.requirements = requirements or None
+            updated.platform = Game.PlatformChoices.WEB
             updated.save()
             game_form.save_m2m()
 

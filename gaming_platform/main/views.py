@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpRequest
 from django.db.models import Prefetch, Count, Sum, Q, DecimalField, Value
 from django.db.models.functions import Coalesce
@@ -49,6 +49,9 @@ def get_last_seen(request):
 
 
 def home_view(request: HttpRequest):
+    if request.user.is_authenticated and request.user.groups.filter(name='Developer').exists():
+        return redirect('accounts:developer_dashboard')
+
     hero_games = list(
         Game.objects
         .filter(is_active=True, is_featured=True)
