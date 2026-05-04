@@ -5,7 +5,7 @@ from django.contrib.auth.models import User, Group
 from django.contrib import messages
 from commerce.models import Order
 from .forms import AdminAddKeyGameForm, BulkGameKeyForm
-from games.models import Game, GameKey
+from games.models import Game, GameKey, GameMedia
 from django.db import transaction
 from django.core.paginator import Paginator
 
@@ -41,6 +41,7 @@ def admin_dashboard_view(request):
 def admin_add_key_game_view(request):
     if request.method == 'POST':
         form = AdminAddKeyGameForm(request.POST, request.FILES)
+
         if form.is_valid():
             with transaction.atomic():
                 game = form.save(commit=False)
@@ -49,21 +50,57 @@ def admin_add_key_game_view(request):
 
                 keys_list = form.cleaned_data.get('keys_text', [])
 
-                game_keys = [
+                existing_keys = set(
+                    GameKey.objects.filter(key__in=keys_list).values_list('key', flat=True)
+                )
+
+                new_keys = [
                     GameKey(game=game, key=single_key)
                     for single_key in keys_list
+                    if single_key not in existing_keys
                 ]
 
-                if game_keys:
-                    GameKey.objects.bulk_create(game_keys)
+                if new_keys:
+                    GameKey.objects.bulk_create(new_keys)
 
-            messages.success(request, "Key game added successfully.")
-            return redirect('dashboard:admin_dashboard')
+                images = request.FILES.getlist('images')
+                videos = request.FILES.getlist('videos')
+
+                order_counter = 0
+
+                for image in images:
+                    GameMedia.objects.create(
+                        game=game,
+                        media_type='image',
+                        file=image,
+                        title='',
+                        order=order_counter
+                    )
+                    order_counter += 1
+
+                for video in videos:
+                    GameMedia.objects.create(
+                        game=game,
+                        media_type='video',
+                        file=video,
+                        title='',
+                        order=order_counter
+                    )
+                    order_counter += 1
+
+            if existing_keys:
+                messages.warning(
+                    request,
+                    f"{len(existing_keys)} key(s) already existed and were skipped."
+                )
+
+            messages.success(request, "Game created successfully.")
+            return redirect('dashboard:admin_games_list')
     else:
         form = AdminAddKeyGameForm()
 
     return render(request, 'dashboard/add_key_game.html', {
-        'form': form
+        'form': form,
     })
 
 
@@ -143,10 +180,33 @@ def add_game_key_view(request, slug):
     else:
         form = BulkGameKeyForm()
 
-    return render(request, 'dashboard/add_key_game.html', {
+    return render(request, 'dashboard/more_key.html', {
         'game': game,
         'form': form,
     })
+
+@login_required
+@user_passes_test(is_admin)
+def admin_update_game_view(request, slug):
+    game = get_object_or_404(Game, slug=slug)
+
+    if request.method == 'POST':
+        form = AdminAddKeyGameForm(request.POST, request.FILES, instance=game)
+        if form.is_valid():
+            updated_game = form.save(commit=False)
+            updated_game.developer = game.developer
+            updated_game.save()
+
+            messages.success(request, "Game updated successfully.")
+            return redirect('dashboard:admin_games_list')
+    else:
+        form = AdminAddKeyGameForm(instance=game)
+
+    return render(request, 'dashboard/update_game.html', {
+        'form': form,
+        'game': game,
+    })
+
 
 
 

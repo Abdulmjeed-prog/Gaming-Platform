@@ -1,161 +1,126 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+<div class="page-content">
+    <div class="page-header">
         <div>
-            <h2 class="fw-bold mb-1">Admin Dashboard</h2>
-            <p class="text-muted mb-0">Manage your gaming platform overview and recent activity.</p>
-        </div>
-        <div class="mt-3 mt-md-0">
-            <a href="#" class="btn btn-dark me-2">Add Game</a>
-            <a href="#" class="btn btn-outline-secondary">View Orders</a>
-        </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <p class="text-muted mb-2">Total Users</p>
-                    <h3 class="fw-bold">{{ total_users }}</h3>
-                    <small class="text-success">Registered platform users</small>
-                </div>
-            </div>
+            <h1 class="page-title">Admin Dashboard</h1>
+            <div class="page-count">Manage your gaming platform overview and recent activity.</div>
         </div>
 
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <p class="text-muted mb-2">Total Games</p>
-                    <h3 class="fw-bold">{{ total_games }}</h3>
-                    <small class="text-primary">Published in store</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <p class="text-muted mb-2">Total Orders</p>
-                    <h3 class="fw-bold">{{ total_orders }}</h3>
-                    <small class="text-warning">All customer orders</small>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body">
-                    <p class="text-muted mb-2">Total Revenue</p>
-                    <h3 class="fw-bold">${{ total_revenue }}</h3>
-                    <small class="text-success">Completed payments only</small>
-                </div>
-            </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="{% url 'dashboard:admin_add_key_game' %}" class="btn-primary-accent">Add Game</a>
+            <a href="#" class="btn-ghost">View Orders</a>
         </div>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0">Recent Orders</h5>
-                        <small class="text-muted">Latest orders on the platform</small>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>User</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for order in recent_orders %}
-                                <tr>
-                                    <td>#{{ order.id }}</td>
-                                    <td>{{ order.user.username }}</td>
-                                    <td>${{ order.total_amount }}</td>
-                                    <td>
-                                        {% if order.status == 'completed' %}
-                                            <span class="badge bg-success">Completed</span>
-                                        {% elif order.status == 'pending' %}
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ order.status|title }}</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted">No recent orders found.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+    <div class="dev-stats-grid">
+        <div class="dev-stat-card">
+            <div class="dev-stat-value">{{ total_users }}</div>
+            <div class="dev-stat-label">Total Users</div>
+            <div class="form-hint">Registered platform users</div>
+        </div>
+
+        <div class="dev-stat-card">
+            <div class="dev-stat-value dev-stat-value--accent">{{ total_games }}</div>
+            <div class="dev-stat-label">Total Games</div>
+            <div class="form-hint">Published in store</div>
+        </div>
+
+        <div class="dev-stat-card">
+            <div class="dev-stat-value">{{ total_orders }}</div>
+            <div class="dev-stat-label">Total Orders</div>
+            <div class="form-hint">All customer orders</div>
+        </div>
+    </div>
+
+    <div class="detail-body" style="margin-top: 24px;">
+        <div>
+            <div class="form-card">
+                <div class="form-card-title">Recent Orders</div>
+
+                <div class="table-responsive">
+                    <table class="detail-meta-table">
+                        <thead>
+                            <tr>
+                                <td><strong>Order ID</strong></td>
+                                <td><strong>User</strong></td>
+                                <td><strong>Total</strong></td>
+                                <td><strong>Status</strong></td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in recent_orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.user.username }}</td>
+                                <td>${{ order.total_amount }}</td>
+                                <td>
+                                    {% if order.status == 'completed' %}
+                                        <span class="badge-pill badge-pill--green">Completed</span>
+                                    {% elif order.status == 'pending' %}
+                                        <span class="badge-pill badge-pill--accent">Pending</span>
+                                    {% else %}
+                                        <span class="badge-pill">{{ order.status|title }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" style="color: var(--text-muted); text-align:center; padding:16px 0;">
+                                    No recent orders found.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0">Platform Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center g-3">
-                        <div class="col-md-4">
-                            <div class="p-3 rounded bg-light">
-                                <h4 class="fw-bold mb-1">{{ total_users }}</h4>
-                                <small class="text-muted">Users</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded bg-light">
-                                <h4 class="fw-bold mb-1">{{ total_games }}</h4>
-                                <small class="text-muted">Games</small>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="p-3 rounded bg-light">
-                                <h4 class="fw-bold mb-1">{{ total_orders }}</h4>
-                                <small class="text-muted">Orders</small>
-                            </div>
-                        </div>
+            <div class="form-card">
+                <div class="form-card-title">Platform Summary</div>
+
+                <div class="analytics-stats-grid" style="margin-bottom:0;">
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-value">{{ total_users }}</div>
+                        <div class="analytics-stat-label">Users</div>
+                    </div>
+
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-value">{{ total_games }}</div>
+                        <div class="analytics-stat-label">Games</div>
+                    </div>
+
+                    <div class="analytics-stat">
+                        <div class="analytics-stat-value">{{ total_orders }}</div>
+                        <div class="analytics-stat-label">Orders</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0">Quick Actions</h5>
-                </div>
-                <div class="card-body d-grid gap-2">
-                    <a href="#" class="btn btn-outline-dark">Add New Game</a>
-                    <a href="{% url 'dashboard:admin_games_list' %}" class="btn btn-outline-primary">Manage Games</a>
-                    <a href="#" class="btn btn-outline-success">View Revenue</a>
-                    <a href="#" class="btn btn-outline-warning">Check Orders</a>
+        <div>
+            <div class="form-card">
+                <div class="form-card-title">Quick Actions</div>
+
+                <div style="display:grid; gap:10px;">
+                    <a href="{% url 'dashboard:admin_add_key_game' %}" class="btn-outline-accent">Add New Game</a>
+                    <a href="{% url 'dashboard:admin_games_list' %}" class="btn-ghost">Manage Games</a>
                 </div>
             </div>
 
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0">Store Notes</h5>
-                </div>
-                <div class="card-body">
-                    <div class="p-3 rounded bg-light mb-3">
-                        <strong>Recent activity</strong>
-                        <p class="text-muted mb-0 small">Monitor new orders and platform performance from one place.</p>
+            <div class="form-card">
+                <div class="form-card-title">Store Notes</div>
+
+                <div style="display:grid; gap:12px;">
+                    <div style="background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius-sm); padding:14px;">
+                        <div style="font-size:14px; font-weight:600; margin-bottom:6px;">Recent activity</div>
+                        <div class="form-hint">Monitor new orders and platform performance from one place.</div>
                     </div>
-                    <div class="p-3 rounded bg-light">
-                        <strong>Admin reminder</strong>
-                        <p class="text-muted mb-0 small">Review payments, game keys, and user issues regularly.</p>
+
+                    <div style="background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius-sm); padding:14px;">
+                        <div style="font-size:14px; font-weight:600; margin-bottom:6px;">Admin reminder</div>
+                        <div class="form-hint">Review payments, game keys, and user issues regularly.</div>
                     </div>
                 </div>
             </div>

@@ -8,4 +8,5 @@ urlpatterns = [
     path('admin-dashboard/games/add/', views.admin_add_key_game_view, name='admin_add_key_game'),
     path('admin-dashboard/games/', views.admin_games_list_view, name='admin_games_list'),
     path('<slug:slug>/add-key/', views.add_game_key_view, name='add_game_key'),
+    path('admin-dashboard/games/<slug:slug>/edit/', views.admin_update_game_view, name='admin_update_game'),
 ]

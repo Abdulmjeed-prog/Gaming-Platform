@@ -1,143 +1,152 @@
 {% extends 'main/base.html' %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+<div class="page-content">
+    <div class="page-header">
         <div>
-            <h2 class="fw-bold mb-1">Games Management</h2>
-            <p class="text-muted mb-0">Manage all games in the platform.</p>
+            <h1 class="page-title">Games Management</h1>
+            <div class="page-count">Manage all games in the platform.</div>
         </div>
-        <div class="mt-3 mt-md-0">
-            <a href="{% url 'dashboard:admin_add_key_game' %}" class="btn btn-dark">
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="{% url 'dashboard:admin_add_key_game' %}" class="btn-primary-accent">
                 Add New Game
             </a>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Search</label>
-                    <input type="text" name="q" value="{{ search_query }}" class="form-control"
-                           placeholder="Search by title, publisher, or developer">
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label">Platform</label>
-                    <select name="platform" class="form-select">
-                        <option value="">All Platforms</option>
-                        {% for value, label in platform_choices %}
-                            <option value="{{ value }}" {% if selected_platform == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-outline-dark w-100">Filter</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Games List</h5>
-            <span class="text-muted small">Total: {{ page_obj.paginator.count }}</span>
+    <form method="GET" class="filter-bar">
+        <div class="filter-group" style="min-width: 260px;">
+            <label class="filter-label">Search</label>
+            <input
+                type="text"
+                name="q"
+                value="{{ search_query }}"
+                class="field-input"
+                placeholder="Search by title, publisher, or developer">
         </div>
 
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Cover</th>
-                            <th>Title</th>
-                            <th>Developer</th>
-                            <th>Platform</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Publisher</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for game in page_obj %}
-                            <tr>
-                                <td>
-                                    {% if game.cover %}
-                                        <img src="{{ game.cover.url }}" alt="{{ game.title }}" width="60" class="rounded">
-                                    {% else %}
-                                        <span class="text-muted">No image</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <strong>{{ game.title }}</strong><br>
-                                    <small class="text-muted">{{ game.release_year }}</small>
-                                </td>
-                                <td>{{ game.developer.username }}</td>
-                                <td>
-                                    <span class="badge bg-secondary">{{ game.get_platform_display }}</span>
-                                </td>
-                                <td>${{ game.price }}</td>
-                                <td>{{ game.stock }}</td>
-                                <td>{{ game.publisher }}</td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="{% url 'games:game_detail' game.slug %}" class="btn btn-sm btn-outline-primary">View</a>
-                                        <a href="#" class="btn btn-sm btn-outline-warning">Edit</a>
-                                        <a href="{% url 'dashboard:add_game_key' game.slug %}" class="btn btn-sm btn-outline-success">Keys</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">No games found.</td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="filter-group" style="max-width: 220px;">
+            <label class="filter-label">Platform</label>
+            <select name="platform" class="field-select">
+                <option value="">All Platforms</option>
+                {% for value, label in platform_choices %}
+                    <option value="{{ value }}" {% if selected_platform == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn-outline-accent">Filter</button>
+            <a href="{% url 'dashboard:admin_games_list' %}" class="btn-ghost">Reset</a>
+        </div>
+    </form>
+
+    <div class="form-card">
+        <div class="page-header" style="margin-bottom:18px;">
+            <div>
+                <div class="form-card-title" style="margin-bottom:0; padding-bottom:0; border-bottom:none;">
+                    Games List
+                </div>
+                <div class="page-count">Total: {{ page_obj.paginator.count }}</div>
             </div>
         </div>
 
-        {% if page_obj.has_other_pages %}
-        <div class="card-footer bg-white">
-            <nav>
-                <ul class="pagination mb-0 justify-content-center">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?q={{ search_query }}&platform={{ selected_platform }}&page={{ page_obj.previous_page_number }}">
-                                Previous
-                            </a>
-                        </li>
-                    {% endif %}
+        <div style="overflow-x:auto;">
+            <table class="detail-meta-table admin-games-table" style="min-width: 980px;">
+                <thead>
+                    <tr>
+                        <td><strong>Cover</strong></td>
+                        <td><strong>Title</strong></td>
+                        <td><strong>Developer</strong></td>
+                        <td><strong>Platform</strong></td>
+                        <td><strong>Price</strong></td>
+                        <td><strong>Publisher</strong></td>
+                        <td><strong>Actions</strong></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in page_obj %}
+                        <tr>
+                            <td>
+                                {% if game.cover %}
+                                    <img src="{{ game.cover.url }}"
+                                         alt="{{ game.title }}"
+                                         style="width:72px;height:44px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);">
+                                {% else %}
+                                    <div style="width:72px;height:44px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text-muted);">
+                                        No image
+                                    </div>
+                                {% endif %}
+                            </td>
 
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% else %}
-                            <li class="page-item">
-                                <a class="page-link" href="?q={{ search_query }}&platform={{ selected_platform }}&page={{ num }}">
-                                    {{ num }}
-                                </a>
-                            </li>
-                        {% endif %}
+                            <td>
+                                <div style="font-weight:700; color:var(--text);">{{ game.title }}</div>
+                                <div class="form-hint">{{ game.release_year }}</div>
+                            </td>
+
+                            <td>{{ game.developer.username }}</td>
+
+                            <td>
+                                <span class="badge-pill">{{ game.get_platform_display }}</span>
+                            </td>
+
+                            <td>${{ game.price }}</td>
+
+
+                            <td>{{ game.publisher }}</td>
+
+                            <td>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <a href="{% url 'games:game_detail' game.slug %}" class="btn-ghost" style="padding:6px 12px; font-size:12px;">
+                                        View
+                                    </a>
+                                    <a href="{% url 'dashboard:admin_update_game' game.slug %}" class="btn-outline-accent" style="padding:6px 12px; font-size:12px;">
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'dashboard:add_game_key' game.slug %}" class="btn-primary-accent" style="padding:6px 12px; font-size:12px;">
+                                        Keys
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" style="text-align:center; padding:24px 0; color:var(--text-muted);">
+                                No games found.
+                            </td>
+                        </tr>
                     {% endfor %}
-
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?q={{ search_query }}&platform={{ selected_platform }}&page={{ page_obj.next_page_number }}">
-                                Next
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
+                </tbody>
+            </table>
         </div>
+
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-bar">
+                {% if page_obj.has_previous %}
+                    <a href="?q={{ search_query }}&platform={{ selected_platform }}&page={{ page_obj.previous_page_number }}">
+                        ‹
+                    </a>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="active-page">{{ num }}</span>
+                    {% else %}
+                        <a href="?q={{ search_query }}&platform={{ selected_platform }}&page={{ num }}">
+                            {{ num }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <a href="?q={{ search_query }}&platform={{ selected_platform }}&page={{ page_obj.next_page_number }}">
+                        ›
+                    </a>
+                {% endif %}
+            </div>
         {% endif %}
     </div>
 </div>

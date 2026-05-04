@@ -91,6 +91,11 @@ def login_view(request: HttpRequest):
         if user:
             login(request, user)
             messages.success(request, "Logged in successfully")
+            if request.user.groups.filter(name='Developer').exists():
+                return redirect('accounts:developer_dashboard')
+            if request.user.is_superuser:
+                return redirect('dashboard:admin_dashboard')
+            
             return redirect('main:home_view')
         else:
             messages.error(request, "Your Username or Password is wrong, try again")

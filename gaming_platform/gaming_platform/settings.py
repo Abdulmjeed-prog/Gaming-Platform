@@ -49,7 +49,8 @@ INSTALLED_APPS = [
     'moderation',
     'notifications',
     'social',
-    'dashboard'
+    'dashboard',
+    "storages",
 ]
 
 MIDDLEWARE = [

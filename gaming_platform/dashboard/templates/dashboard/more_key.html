@@ -1,0 +1,120 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Add Keys{% endblock %}
+
+{% block content %}
+<div class="form-wrap" style="max-width: 900px;">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Add Keys</h1>
+            <div class="page-count">Paste multiple keys for {{ game.title }}, one key per line.</div>
+        </div>
+
+        <a href="{% url 'games:game_detail' slug=game.slug %}" class="btn-ghost">
+            Back
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-non-field-error">
+                {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="form-layout" style="grid-template-columns: 1fr 280px;">
+            <div>
+                <div class="form-card">
+                    <div class="form-card-title">Keys Input</div>
+
+                    <div class="field-group" style="margin-bottom:0;">
+                        <label for="{{ form.keys_text.id_for_label }}" class="field-label">
+                            {{ form.keys_text.label }}
+                        </label>
+
+                        {{ form.keys_text }}
+
+                        {% if form.keys_text.help_text %}
+                            <div class="form-hint">{{ form.keys_text.help_text }}</div>
+                        {% endif %}
+
+                        {% if form.keys_text.errors %}
+                            <div class="field-error">
+                                {% for error in form.keys_text.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">Example Format</div>
+
+                    <div style="background: var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px;">
+                        <pre style="margin:0; color:var(--text); font-size:13px; line-height:1.7; white-space:pre-wrap;">ABC-123-XYZ
+DEF-456-QWE
+GAME-KEY-001</pre>
+                    </div>
+
+                    <div class="form-hint">Each line will be saved as a separate key.</div>
+                </div>
+            </div>
+
+            <div>
+                <div class="form-card">
+                    <div class="form-card-title">Game</div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">{{ game.title }}</div>
+                            <div class="version-meta">Target game for imported keys</div>
+                        </div>
+                    </div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">Slug</div>
+                            <div class="version-meta">{{ game.slug }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">Actions</div>
+
+                    <div style="display:grid; gap:10px;">
+                        <button type="submit" class="btn-primary-accent" style="width:100%;">
+                            Add Keys
+                        </button>
+
+                        <a href="{% url 'games:game_detail' slug=game.slug %}" class="btn-ghost" style="width:100%; justify-content:center;">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">Tips</div>
+
+                    <div style="display:grid; gap:12px;">
+                        <div style="background: var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px;">
+                            <div style="font-size:13px; font-weight:700; margin-bottom:6px;">One per line</div>
+                            <div class="form-hint" style="margin-top:0;">Do not separate keys with commas.</div>
+                        </div>
+
+                        <div style="background: var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px;">
+                            <div style="font-size:13px; font-weight:700; margin-bottom:6px;">Avoid duplicates</div>
+                            <div class="form-hint" style="margin-top:0;">Paste only unused keys to keep inventory clean.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

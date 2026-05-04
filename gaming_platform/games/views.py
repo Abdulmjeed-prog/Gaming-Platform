@@ -13,6 +13,8 @@ from .forms import GameForm, GameVersionForm, GameKeyForm
 from .decorators import developer_required
 from social.forms import CommentForm, ReviewForm
 from social.models import Comment, Review
+from django.db.models import Q, Sum
+
 
 
 def extract_game_zip(zip_file_field, slug):
@@ -392,4 +394,19 @@ def add_game_key_view(request, slug):
     return render(request, 'games/add_game_key.html', {
         'game': game,
         'form': form,
+    })
+
+
+def search_game(request: HttpRequest):
+    query = request.GET.get('q', '').strip()
+    games = Game.objects.none()
+
+    if query:
+        games = Game.objects.filter(
+            Q(title__icontains=query)
+        ).distinct()
+
+    return render(request, 'games/all_games.html', {
+        'query': query,
+        'games': games,
     })

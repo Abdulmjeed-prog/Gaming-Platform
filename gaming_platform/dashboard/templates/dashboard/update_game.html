@@ -4,8 +4,8 @@
 <div class="form-wrap">
     <div class="page-header">
         <div>
-            <h1 class="page-title">Add Key Game</h1>
-            <div class="page-count">Create a key-based game, add keys, and upload media.</div>
+            <h1 class="page-title">Update Game</h1>
+            <div class="page-count">Edit details for {{ game.title }}.</div>
         </div>
 
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -102,51 +102,81 @@
                         </div>
                     {% endif %}
                 {% endfor %}
-
-                <div class="form-card">
-                    <div class="form-card-title">Media Uploads</div>
-
-                    <div class="field-group">
-                        <label class="field-label">Screenshots</label>
-                        <input type="file" name="images" class="field-input" multiple accept="image/*">
-                        <div class="form-hint">Select one or more images.</div>
-                    </div>
-
-                    <div class="field-group" style="margin-bottom:0;">
-                        <label class="field-label">Videos</label>
-                        <input type="file" name="videos" class="field-input" multiple accept="video/*">
-                        <div class="form-hint">Select one or more videos.</div>
-                    </div>
-                </div>
             </div>
 
             <div>
+                <div class="form-card">
+                    <div class="form-card-title">Current Cover</div>
+
+                    <div class="cover-preview-wrap">
+                        <div class="cover-preview">
+                            {% if game.cover %}
+                                <img src="{{ game.cover.url }}" alt="{{ game.title }}">
+                            {% else %}
+                                <span>No cover uploaded</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-hint">
+                        Upload a new cover from the form fields to replace the current one.
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">Game Info</div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">Title</div>
+                            <div class="version-meta">{{ game.title }}</div>
+                        </div>
+                    </div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">Platform</div>
+                            <div class="version-meta">{{ game.get_platform_display }}</div>
+                        </div>
+                    </div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">Publisher</div>
+                            <div class="version-meta">{{ game.publisher|default:"Not set" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">Release Year</div>
+                            <div class="version-meta">{{ game.release_year|default:"Not set" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="version-item">
+                        <div>
+                            <div class="version-number">Price</div>
+                            <div class="version-meta">${{ game.price }}</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-card">
                     <div class="form-card-title">Actions</div>
 
                     <div style="display:grid; gap:10px;">
                         <button type="submit" class="btn-primary-accent" style="width:100%;">
-                            Save Game
+                            Update Game
                         </button>
+
                         <a href="{% url 'dashboard:admin_games_list' %}" class="btn-ghost" style="width:100%; justify-content:center;">
                             Cancel
                         </a>
-                    </div>
-                </div>
 
-                <div class="form-card">
-                    <div class="form-card-title">Tips</div>
-
-                    <div style="display:grid; gap:12px;">
-                        <div style="background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius-sm); padding:14px;">
-                            <div style="font-size:14px; font-weight:600; margin-bottom:6px;">Keys format</div>
-                            <div class="form-hint">Paste one key per line in the keys field.</div>
-                        </div>
-
-                        <div style="background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius-sm); padding:14px;">
-                            <div style="font-size:14px; font-weight:600; margin-bottom:6px;">Media upload</div>
-                            <div class="form-hint">You can upload multiple screenshots and videos for the game page.</div>
-                        </div>
+                        <a href="{% url 'games:game_detail' game.slug %}" class="btn-outline-accent" style="width:100%; justify-content:center;">
+                            View Game
+                        </a>
                     </div>
                 </div>
             </div>
