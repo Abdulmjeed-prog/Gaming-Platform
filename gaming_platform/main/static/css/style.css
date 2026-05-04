@@ -265,7 +265,7 @@ img { display: block; max-width: 100%; }
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.carousel-slide { flex: 0 0 100%; height: 100%; }
+.carousel-slide { flex: 0 0 100%; height: 100%; position: relative; }
 
 .carousel-img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -278,10 +278,11 @@ img { display: block; max-width: 100%; }
 .carousel-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.3) 55%, transparent 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.3) 50%, transparent 75%),
+                linear-gradient(to right, rgba(0,0,0,0.6) 0%, transparent 60%);
     display: flex;
     align-items: flex-end;
-    padding: 32px 40px;
+    padding: 80px 48px 80px 90px;
 }
 
 .carousel-info { max-width: 480px; }
@@ -2014,4 +2015,179 @@ img { display: block; max-width: 100%; }
 
 .admin-games-table tbody tr:hover td {
   background: rgba(255, 255, 255, 0.01);
+}
+/* ── CAROUSEL EXTRAS ── */
+
+.carousel-genres {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.carousel-genre-tag {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--accent);
+    background: rgba(255,90,31,0.15);
+    border: 1px solid rgba(255,90,31,0.3);
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.carousel-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.carousel-cta {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 18px;
+    padding: 9px 22px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.15s;
+}
+
+.carousel-cta:hover { opacity: 0.85; color: #fff; }
+
+/* ── HOME REVIEWS ── */
+
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.home-review-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.15s;
+}
+
+.home-review-card:hover { border-color: rgba(255,255,255,0.16); }
+
+.home-review-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.home-review-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.home-review-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.home-review-username {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.home-review-game {
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 0.12s;
+}
+
+.home-review-game:hover { opacity: 0.8; }
+
+.home-review-rating {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+.home-review-body {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    flex: 1;
+}
+
+.home-review-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+@media (max-width: 900px) {
+    .reviews-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .reviews-grid { grid-template-columns: 1fr; }
+}
+
+.user-avatar--img {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.home-review-avatar--img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── CAROUSEL CURVE ── */
+
+.carousel-curve {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    line-height: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.carousel-curve svg {
+    display: block;
+    width: 100%;
+    height: 60px;
 }

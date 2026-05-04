@@ -382,7 +382,7 @@ def checkout_view(request: HttpRequest):
                     _record_sale(item, today)
 
                 cart.items.all().delete()
-                send_order_confirmation_email(request, order)
+                # send_order_confirmation_email(request, order)
             messages.success(request, 'Payment completed successfully.')
             return redirect('commerce:order_success', order_id=order.id)
 

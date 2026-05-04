@@ -3,6 +3,7 @@ from django.http import HttpRequest
 from django.db.models import Prefetch
 from games.models import Game, GameMedia
 from library.models import UserGameLibrary
+from social.models import Review
 
 
 def _video_prefetch():
@@ -61,9 +62,17 @@ def home_view(request: HttpRequest):
                 .distinct()[:6]
             )
 
+    recent_reviews = (
+        Review.objects
+        .select_related('user', 'user__profile', 'game')
+        .filter(game__is_active=True, is_approved=True)
+        .order_by('?')[:6]
+    )
+
     context = {
         'hero_games': hero_games,
         'trending_games': trending_games,
         'recommended_games': recommended_games,
+        'recent_reviews': recent_reviews,
     }
     return render(request, 'main/home.html', context)

@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search-input');
 
     if (searchToggle && searchForm) {
-        searchToggle.addEventListener('click', function () {
+        searchToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
             searchForm.classList.toggle('open');
             if (searchForm.classList.contains('open')) {
                 searchInput.focus();
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.addEventListener('click', function (e) {
-            if (!searchForm.contains(e.target) && e.target !== searchToggle) {
+            if (!searchForm.contains(e.target) && !searchToggle.contains(e.target)) {
                 searchForm.classList.remove('open');
             }
         });
