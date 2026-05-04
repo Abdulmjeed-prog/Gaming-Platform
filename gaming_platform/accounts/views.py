@@ -16,6 +16,7 @@ from django.template.loader import render_to_string
 from django.core.mail import send_mail
 from django.conf import settings
 
+
 def signup_view(request: HttpRequest):
     if request.user.is_authenticated:
         return redirect('main:home_view')
@@ -38,7 +39,10 @@ def signup_view(request: HttpRequest):
                 'profile_form': profile_form
             })
 
-    return render(request, 'accounts/signup.html')
+    return render(request, 'accounts/signup.html', {
+        'user_form': CustomUserCreationForm(),
+        'profile_form': ProfileForm(),
+    })
 
 
 def developer_signup_view(request: HttpRequest):
@@ -86,10 +90,7 @@ def login_view(request: HttpRequest):
         )
         if user:
             login(request, user)
-            if request.user.groups.filter(name='Developer').exists():
-                messages.success(request, "Logged in successufly")
-                return redirect('main:home_view')
-            messages.success(request, "Logged in successufly")
+            messages.success(request, "Logged in successfully")
             return redirect('main:home_view')
         else:
             messages.error(request, "Your Username or Password is wrong, try again")
@@ -111,8 +112,34 @@ def developer_dashboard(request: HttpRequest):
     if not is_developer(request.user):
         return HttpResponseForbidden()
 
+    from analytics.models import DeveloperEarnings, GameAnalytics
+    from .models import DeveloperProfile
+
     games = request.user.games.order_by('-created_at')
-    return render(request, 'accounts/developer_dashboard.html', {'games': games})
+    published_count = games.filter(is_active=True).count()
+    draft_count = games.filter(is_active=False).count()
+
+    try:
+        dev_profile = DeveloperProfile.objects.get(user=request.user)
+        total_revenue = DeveloperEarnings.objects.filter(
+            developer=dev_profile
+        ).aggregate(total=Sum('revenue'))['total'] or 0
+
+        game_ids = games.values_list('id', flat=True)
+        total_sales = GameAnalytics.objects.filter(
+            game_id__in=game_ids
+        ).aggregate(total=Sum('purchases'))['total'] or 0
+    except DeveloperProfile.DoesNotExist:
+        total_revenue = 0
+        total_sales = 0
+
+    return render(request, 'accounts/developer_dashboard.html', {
+        'games': games,
+        'published_count': published_count,
+        'draft_count': draft_count,
+        'total_revenue': total_revenue,
+        'total_sales': total_sales,
+    })
 
 
 def profile_view(request: HttpRequest):
@@ -130,7 +157,6 @@ def developer_profile_view(request: HttpRequest, username):
         player_profile = None
 
     published_games = dev_user.games.filter(is_active=True).prefetch_related('genre')
-
     follower_count = FollowDeveloper.objects.filter(developer=dev_profile).count()
 
     is_following = False
@@ -141,14 +167,11 @@ def developer_profile_view(request: HttpRequest, username):
         ).exists()
 
     announcements = dev_profile.announcements.all()[:10]
-
     is_owner = request.user == dev_user
 
-    # private owner-only data
     private_data = {}
     if is_owner:
         from analytics.models import DeveloperEarnings, GameAnalytics
-        from games.models import Game
 
         unpublished_games = dev_user.games.filter(is_active=False)
 

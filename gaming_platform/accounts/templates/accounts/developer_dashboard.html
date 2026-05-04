@@ -1,48 +1,74 @@
-{% extends 'main/base.html' %}
-{% load static %}
+{% extends "main/base.html" %}
 
 {% block title %}My Games{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">My Games</h2>
-        <a href="{% url 'games:create_game' %}" class="btn btn-primary">+ New Game</a>
+<div class="dev-wrap">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">My Games</h1>
+            <p class="page-count">{{ games.count }} game{{ games.count|pluralize }}</p>
+        </div>
+        <a href="{% url 'games:create_game' %}" class="btn-primary-accent">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Game
+        </a>
+    </div>
+
+    <div class="dev-stats-grid">
+        <div class="dev-stat-card">
+            <div class="dev-stat-value dev-stat-value--accent">${{ total_revenue|floatformat:2 }}</div>
+            <div class="dev-stat-label">Total Revenue</div>
+        </div>
+        <div class="dev-stat-card">
+            <div class="dev-stat-value">{{ total_sales }}</div>
+            <div class="dev-stat-label">Total Sales</div>
+        </div>
+        <div class="dev-stat-card">
+            <div class="dev-stat-value dev-stat-value--green">{{ published_count }}</div>
+            <div class="dev-stat-label">Published</div>
+        </div>
+        <div class="dev-stat-card">
+            <div class="dev-stat-value">{{ draft_count }}</div>
+            <div class="dev-stat-label">Drafts</div>
+        </div>
     </div>
 
     {% if games %}
-        <div class="row g-4">
-            {% for game in games %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="card border-0 shadow-sm h-100">
-                        {% if game.cover %}
-                            <img src="{{ game.cover.url }}" class="card-img-top" style="height:160px; object-fit:cover;" alt="{{ game.title }}">
-                        {% else %}
-                            <div class="bg-light d-flex align-items-center justify-content-center" style="height:160px;">
-                                <span class="text-muted">No Cover</span>
-                            </div>
-                        {% endif %}
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="card-title mb-0">{{ game.title }}</h6>
-                                {% if game.is_active %}
-                                    <span class="badge bg-success">Published</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Draft</span>
-                                {% endif %}
-                            </div>
-                            <p class="text-muted small mb-3">${{ game.price }} &middot; {{ game.created_at|date:"M d, Y" }}</p>
-                            <a href="{% url 'games:game_manage' game.slug %}" class="btn btn-outline-primary btn-sm w-100">Manage</a>
-                        </div>
-                    </div>
+    <div class="dev-games-grid">
+        {% for game in games %}
+        <div class="dev-game-card">
+            <div class="dev-game-cover">
+                {% if game.cover %}
+                    <img src="{{ game.cover.url }}" alt="{{ game.title }}">
+                {% else %}
+                    <div class="dev-game-cover-placeholder"></div>
+                {% endif %}
+                <span class="dev-game-status {% if game.is_active %}dev-game-status--published{% else %}dev-game-status--draft{% endif %}">
+                    {% if game.is_active %}Published{% else %}Draft{% endif %}
+                </span>
+            </div>
+            <div class="dev-game-body">
+                <div class="dev-game-title">{{ game.title }}</div>
+                <div class="dev-game-meta">
+                    <span>${{ game.price }}</span>
+                    <span>{{ game.created_at|date:"M d, Y" }}</span>
                 </div>
-            {% endfor %}
+                <a href="{% url 'games:game_manage' game.slug %}" class="btn-ghost" style="width:100%;justify-content:center;">Manage</a>
+            </div>
         </div>
+        {% endfor %}
+    </div>
+
     {% else %}
-        <div class="text-center py-5 text-muted">
-            <p>You have not published any games yet.</p>
-            <a href="{% url 'games:create_game' %}" class="btn btn-primary">Create Your First Game</a>
-        </div>
+    <div class="empty-state">
+        <div style="font-size:40px;margin-bottom:16px;">🎮</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">No games yet</div>
+        <p style="margin-bottom:24px;">Create your first game and start building your audience.</p>
+        <a href="{% url 'games:create_game' %}" class="btn-primary-accent">Create Your First Game</a>
+    </div>
     {% endif %}
+
 </div>
 {% endblock %}

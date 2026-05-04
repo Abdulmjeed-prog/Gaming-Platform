@@ -1,75 +1,130 @@
 {% extends "main/base.html" %}
 
-{% block title %}Developer Sign Up{% endblock %}
+{% block title %}Create Developer Account{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-xl-7">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4 p-md-5">
-                    <h2 class="mb-2 text-center">Developer Sign Up</h2>
-                    <p class="text-muted text-center mb-4">
-                        Create your developer account and complete your studio profile.
-                    </p>
+<div class="auth-page">
+    <div class="auth-card auth-card--wide">
 
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-info">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
+        <div class="auth-logo">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+                <polygon points="4,24 14,4 24,24 18,24 14,14 10,24" fill="var(--accent)"/>
+            </svg>
+            <span style="font-size:13px;font-weight:800;letter-spacing:0.08em;">GAMING PLATFORM</span>
+        </div>
 
-                    <form method="POST">
-                        {% csrf_token %}
+        <h1 class="auth-title">Create Developer Account</h1>
+        <p class="auth-subtitle">Build and publish games to the platform</p>
 
-                        <h5 class="mb-3">Account Information</h5>
+        <form method="POST">
+            {% csrf_token %}
 
-                        {% for field in user_form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">
-                                    {{ field.label }}
-                                </label>
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text|safe }}</div>
-                                {% endif %}
-                                {% for error in field.errors %}
-                                    <div class="text-danger small mt-1">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
+            <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:14px;">Account Info</p>
 
-                        <hr class="my-4">
-
-                        <h5 class="mb-3">Developer Profile</h5>
-
-                        {% for field in developer_form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">
-                                    {{ field.label }}
-                                </label>
-                                {{ field }}
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text|safe }}</div>
-                                {% endif %}
-                                {% for error in field.errors %}
-                                    <div class="text-danger small mt-1">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
-
-                        <button type="submit" class="btn btn-dark w-100 mt-3">
-                            Create Developer Account
-                        </button>
-                    </form>
-
-                    <p class="text-center mt-4 mb-0">
-                        Already have an account?
-                        <a href="{% url 'accounts:login_view' %}">Login</a>
-                    </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="field-group">
+                    <label class="field-label">First Name</label>
+                    <input type="text"
+                           class="field-input {% if user_form.first_name.errors %}is-invalid{% endif %}"
+                           name="first_name"
+                           placeholder="First name"
+                           value="{{ user_form.first_name.value|default:'' }}">
+                    {% for e in user_form.first_name.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Last Name</label>
+                    <input type="text"
+                           class="field-input {% if user_form.last_name.errors %}is-invalid{% endif %}"
+                           name="last_name"
+                           placeholder="Last name"
+                           value="{{ user_form.last_name.value|default:'' }}">
+                    {% for e in user_form.last_name.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
                 </div>
             </div>
+
+            <div class="field-group">
+                <label class="field-label">Username</label>
+                <input type="text"
+                       class="field-input {% if user_form.username.errors %}is-invalid{% endif %}"
+                       name="username"
+                       placeholder="Choose a username"
+                       value="{{ user_form.username.value|default:'' }}"
+                       autocomplete="username">
+                {% for e in user_form.username.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Email</label>
+                <input type="email"
+                       class="field-input {% if user_form.email.errors %}is-invalid{% endif %}"
+                       name="email"
+                       placeholder="your@email.com"
+                       value="{{ user_form.email.value|default:'' }}">
+                {% for e in user_form.email.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="field-group">
+                    <label class="field-label">Password</label>
+                    <input type="password"
+                           class="field-input {% if user_form.password1.errors %}is-invalid{% endif %}"
+                           name="password1"
+                           placeholder="Create a password"
+                           autocomplete="new-password">
+                    {% for e in user_form.password1.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+                </div>
+                <div class="field-group">
+                    <label class="field-label">Confirm Password</label>
+                    <input type="password"
+                           class="field-input {% if user_form.password2.errors %}is-invalid{% endif %}"
+                           name="password2"
+                           placeholder="Repeat password"
+                           autocomplete="new-password">
+                    {% for e in user_form.password2.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+                </div>
+            </div>
+
+            <div class="auth-divider"></div>
+
+            <p style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:14px;">Studio Profile</p>
+
+            <div class="field-group">
+                <label class="field-label">Studio / Company Name</label>
+                <input type="text"
+                       class="field-input {% if developer_form.company_name.errors %}is-invalid{% endif %}"
+                       name="company_name"
+                       placeholder="Your studio name"
+                       value="{{ developer_form.company_name.value|default:'' }}">
+                {% for e in developer_form.company_name.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Website <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <input type="url"
+                       class="field-input {% if developer_form.website.errors %}is-invalid{% endif %}"
+                       name="website"
+                       placeholder="https://yourstudio.com"
+                       value="{{ developer_form.website.value|default:'' }}">
+                {% for e in developer_form.website.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">Description <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <textarea class="field-input {% if developer_form.description.errors %}is-invalid{% endif %}"
+                          name="description" rows="3"
+                          placeholder="Tell players about your studio...">{{ developer_form.description.value|default:'' }}</textarea>
+                {% for e in developer_form.description.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+
+            <button type="submit" class="btn-primary-accent" style="width:100%;margin-top:8px;">
+                Create Developer Account
+            </button>
+        </form>
+
+        <div class="auth-switch">
+            Already have an account? <a href="{% url 'accounts:login_view' %}">Log in</a>
         </div>
+
     </div>
 </div>
 {% endblock %}
