@@ -1,90 +1,113 @@
 {% extends "main/base.html" %}
 
-{% block title %}All Games{% endblock %}
+{% block title %}Browse Games{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-content">
+
+    <div class="page-header">
         <div>
-            <h1 class="mb-1">All Games</h1>
-            <p class="text-muted mb-0">Browse all available games.</p>
+            <h1 class="page-title">Browse Games</h1>
+            <p class="page-count">{{ games.paginator.count }} game{{ games.paginator.count|pluralize }} available</p>
         </div>
-        <a href="{% url 'games:create_game' %}" class="btn btn-primary">Create Game</a>
     </div>
 
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <label for="genre" class="form-label">Genre</label>
-            <select name="genre" id="genre" class="form-select">
+    <form method="get" class="filter-bar">
+        {% if selected_platform %}
+            <input type="hidden" name="platform" value="{{ selected_platform }}">
+        {% endif %}
+
+        <div class="filter-group">
+            <label class="filter-label">Search</label>
+            <input type="text" name="q" class="field-input"
+                   placeholder="Game title..."
+                   value="{{ query|default:'' }}">
+        </div>
+
+        <div class="filter-group">
+            <label class="filter-label">Genre</label>
+            <select name="genre" class="field-select">
                 <option value="">All Genres</option>
                 {% for genre in genres %}
-                    <option value="{{ genre.id }}" {% if selected_genre == genre.id|stringformat:"s" %}selected{% endif %}>
+                    <option value="{{ genre.id }}"
+                        {% if selected_genre == genre.id|stringformat:"s" %}selected{% endif %}>
                         {{ genre.name }}
                     </option>
                 {% endfor %}
             </select>
         </div>
 
-        <div class="col-md-4">
-            <label for="sort" class="form-label">Sort By</label>
-            <select name="sort" id="sort" class="form-select">
-                <option value="">Title A-Z</option>
-                <option value="price_low" {% if selected_sort == "price_low" %}selected{% endif %}>Price: Low to High</option>
+        <div class="filter-group">
+            <label class="filter-label">Sort By</label>
+            <select name="sort" class="field-select">
+                <option value="">Title A–Z</option>
+                <option value="rating"     {% if selected_sort == "rating"     %}selected{% endif %}>Highest Rated</option>
+                <option value="price_low"  {% if selected_sort == "price_low"  %}selected{% endif %}>Price: Low to High</option>
                 <option value="price_high" {% if selected_sort == "price_high" %}selected{% endif %}>Price: High to Low</option>
-                <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Newest</option>
-                <option value="oldest" {% if selected_sort == "oldest" %}selected{% endif %}>Oldest</option>
+                <option value="newest"     {% if selected_sort == "newest"     %}selected{% endif %}>Newest</option>
             </select>
         </div>
 
-        <div class="col-md-4 d-flex align-items-end gap-2">
-            <button type="submit" class="btn btn-primary">Apply</button>
-            <a href="{% url 'games:all_games' %}" class="btn btn-outline-secondary">Reset</a>
+        <div class="filter-actions">
+            <button type="submit" class="btn-primary-accent">Apply</button>
+            <a href="{% url 'games:all_games' %}" class="btn-ghost">Reset</a>
         </div>
     </form>
 
-    <div class="row g-4">
+    {% if selected_platform %}
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);">
+        Filtered by:
+        <span class="badge-pill badge-pill--accent">
+            {% if selected_platform == 'PC' %}PC Games{% else %}Browser Games{% endif %}
+        </span>
+        <a href="{% url 'games:all_games' %}" style="color:var(--text-muted);font-size:12px;">clear</a>
+    </div>
+    {% endif %}
+
+    <div class="games-grid">
         {% for game in games %}
-        <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-            <div class="card h-100 shadow-sm border-0">
+        <a href="{% url 'games:game_detail' game.slug %}" class="game-card">
+            <div class="game-card-cover">
                 {% if game.cover %}
-                    <img src="{{ game.cover.url }}" class="card-img-top" alt="{{ game.title }}" style="height: 220px; object-fit: cover;">
+                    <img src="{{ game.cover.url }}" alt="{{ game.title }}" class="game-card-img">
                 {% else %}
-                    <div class="bg-light d-flex align-items-center justify-content-center" style="height: 220px;">
-                        <span class="text-muted">No Cover</span>
-                    </div>
+                    <div class="game-card-img game-card-img--placeholder"></div>
                 {% endif %}
-
-                <div class="card-body d-flex flex-column">
-                    <h5 class="card-title mb-2">{{ game.title }}</h5>
-
-                    <p class="text-muted small mb-2">
-                        {{ game.get_platform_display }} • {{ game.release_year }}
-                    </p>
-
-                    <p class="card-text mb-3">
-                        {% if game.description %}
-                            {{ game.description|truncatewords:15 }}
-                        {% else %}
-                            No description available.
-                        {% endif %}
-                    </p>
-
-                    <div class="mt-auto">
-                        <p class="fw-bold mb-3">${{ game.price }}</p>
-                        <a href="{% url 'games:game_detail' game.slug %}" class="btn btn-outline-primary w-100">
-                            View Details
-                        </a>
-                    </div>
-                </div>
             </div>
-        </div>
+            <span class="game-card-platform">{{ game.get_platform_display }}</span>
+            {% if game.avg_rating > 0 %}
+            <span class="game-card-rating">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                {{ game.avg_rating }}
+            </span>
+            {% endif %}
+            <div class="game-card-info">
+                <span class="game-card-title">{{ game.title }}</span>
+                <span class="game-card-price">${{ game.price }}</span>
+            </div>
+        </a>
         {% empty %}
-        <div class="col-12">
-            <div class="alert alert-info text-center mb-0">
-                No games found.
-            </div>
-        </div>
+        <div class="empty-state">No games found matching your filters.</div>
         {% endfor %}
     </div>
+
+    {% if games.has_other_pages %}
+    <div class="pagination-bar">
+        {% if games.has_previous %}
+            <a href="?page={{ games.previous_page_number }}&q={{ query|default:'' }}&genre={{ selected_genre|default:'' }}&sort={{ selected_sort|default:'' }}&platform={{ selected_platform|default:'' }}">‹</a>
+        {% endif %}
+        {% for num in games.paginator.page_range %}
+            {% if games.number == num %}
+                <span class="active-page">{{ num }}</span>
+            {% elif num > games.number|add:'-3' and num < games.number|add:'3' %}
+                <a href="?page={{ num }}&q={{ query|default:'' }}&genre={{ selected_genre|default:'' }}&sort={{ selected_sort|default:'' }}&platform={{ selected_platform|default:'' }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if games.has_next %}
+            <a href="?page={{ games.next_page_number }}&q={{ query|default:'' }}&genre={{ selected_genre|default:'' }}&sort={{ selected_sort|default:'' }}&platform={{ selected_platform|default:'' }}">›</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

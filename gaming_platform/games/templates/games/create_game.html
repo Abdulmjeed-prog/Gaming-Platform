@@ -1,181 +1,204 @@
-{% extends 'main/base.html' %}
+{% extends "main/base.html" %}
 {% load static %}
 
 {% block title %}Create Game{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+<div class="form-wrap">
 
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h2 class="mb-0">Create Game</h2>
-                <a href="{% url 'accounts:developer_dashboard' %}" class="btn btn-outline-secondary btn-sm">Back</a>
-            </div>
+    <div style="margin-bottom:20px;">
+        <a href="{% url 'accounts:developer_dashboard' %}"
+           style="font-size:13px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            My Games
+        </a>
+    </div>
 
-            <div class="alert alert-info">
-                Games are saved as drafts. Publish from the manage page once ready.
-            </div>
+    <div class="page-header" style="margin-bottom:24px;">
+        <h1 class="page-title">Create Game</h1>
+    </div>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
-                    <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
+    <div style="background:rgba(255,90,31,0.08);border:1px solid rgba(255,90,31,0.25);border-radius:var(--radius);padding:12px 16px;font-size:13px;color:var(--text-muted);margin-bottom:24px;">
+        Games are saved as drafts. Publish from the manage page when ready.
+    </div>
 
-                        {% if game_form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {% for error in game_form.non_field_errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
 
-                        <h5 class="mb-3">Game Info</h5>
+        {% if game_form.non_field_errors %}
+        <div class="form-non-field-error">
+            {% for error in game_form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+        {% endif %}
 
-                        <div class="mb-3">
-                            <label for="{{ game_form.title.id_for_label }}" class="form-label">Title</label>
-                            {{ game_form.title }}
-                            {% for error in game_form.title.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+        <div class="form-layout">
+
+            <div>
+                <div class="form-card">
+                    <div class="form-card-title">Game Info</div>
+
+                    <div class="field-group">
+                        <label class="field-label">Title</label>
+                        <input type="text" name="title"
+                               class="field-input {% if game_form.title.errors %}is-invalid{% endif %}"
+                               placeholder="Game title"
+                               value="{{ game_form.title.value|default:'' }}">
+                        {% for e in game_form.title.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Description</label>
+                        <textarea name="description" rows="4"
+                                  class="field-input {% if game_form.description.errors %}is-invalid{% endif %}"
+                                  placeholder="Describe your game...">{{ game_form.description.value|default:'' }}</textarea>
+                        {% for e in game_form.description.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+                    </div>
+
+                    <div class="field-group">
+                        <label class="field-label">Genre</label>
+                        {{ game_form.genre }}
+                        {% for e in game_form.genre.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+                    </div>
+
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label class="field-label">Price ($)</label>
+                            <input type="number" name="price" step="0.01" min="0"
+                                   class="field-input {% if game_form.price.errors %}is-invalid{% endif %}"
+                                   placeholder="0.00"
+                                   value="{{ game_form.price.value|default:'' }}">
+                            {% for e in game_form.price.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                         </div>
-
-                        <div class="mb-3">
-                            <label for="{{ game_form.genre.id_for_label }}" class="form-label">Genre</label>
-                            {{ game_form.genre }}
-                            {% for error in game_form.genre.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+                        <div class="field-group">
+                            <label class="field-label">Release Year</label>
+                            <input type="number" name="release_year"
+                                   class="field-input {% if game_form.release_year.errors %}is-invalid{% endif %}"
+                                   placeholder="2025"
+                                   value="{{ game_form.release_year.value|default:'' }}">
+                            {% for e in game_form.release_year.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="{{ game_form.description.id_for_label }}" class="form-label">Description</label>
-                            {{ game_form.description }}
-                            {% for error in game_form.description.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label class="field-label">Publisher</label>
+                            <input type="text" name="publisher"
+                                   class="field-input {% if game_form.publisher.errors %}is-invalid{% endif %}"
+                                   placeholder="Publisher name"
+                                   value="{{ game_form.publisher.value|default:'' }}">
+                            {% for e in game_form.publisher.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ game_form.price.id_for_label }}" class="form-label">Price ($)</label>
-                                {{ game_form.price }}
-                                {% for error in game_form.price.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ game_form.release_year.id_for_label }}" class="form-label">Release Year</label>
-                                {{ game_form.release_year }}
-                                {% for error in game_form.release_year.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
+                        <div class="field-group">
+                            <label class="field-label">Platform</label>
+                            {{ game_form.platform }}
+                            {% for e in game_form.platform.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ game_form.publisher.id_for_label }}" class="form-label">Publisher</label>
-                                {{ game_form.publisher }}
-                                {% for error in game_form.publisher.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ game_form.platform.id_for_label }}" class="form-label">Platform</label>
-                                {{ game_form.platform }}
-                                {% for error in game_form.platform.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
+                    <div class="field-group">
+                        <label class="field-label">
+                            Requirements
+                            <span style="color:var(--text-muted);font-weight:400;">(optional)</span>
+                        </label>
+                        <textarea name="requirements_text" rows="4"
+                                  class="field-input"
+                                  placeholder="OS: Windows 10&#10;RAM: 4GB&#10;Storage: 1GB">{{ game_form.requirements_text.value|default:'' }}</textarea>
+                        <span class="form-hint">One per line in Key: Value format.</span>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">How Players Launch the Game</div>
+                    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Provide a Play URL or upload a zip file — at least one is required.</p>
+
+                    <div class="field-group">
+                        <label class="field-label">Play URL</label>
+                        <input type="url" name="play_url"
+                               class="field-input {% if game_form.play_url.errors %}is-invalid{% endif %}"
+                               placeholder="https://..."
+                               value="{{ game_form.play_url.value|default:'' }}">
+                        <span class="form-hint">External hosted URL if not uploading a file.</span>
+                        {% for e in game_form.play_url.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+                    </div>
+
+                    {% if version_form.non_field_errors %}
+                    <div class="form-non-field-error">{{ version_form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="form-row">
+                        <div class="field-group">
+                            <label class="field-label">Version Number</label>
+                            <input type="text" name="version_number"
+                                   class="field-input {% if version_form.version_number.errors %}is-invalid{% endif %}"
+                                   placeholder="1.0.0"
+                                   value="{{ version_form.version_number.value|default:'' }}">
+                            {% for e in version_form.version_number.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                         </div>
-
-                        <div class="mb-3">
-                            <label for="{{ game_form.requirements_text.id_for_label }}" class="form-label">Requirements</label>
-                            {{ game_form.requirements_text }}
-                            <div class="form-text">{{ game_form.requirements_text.help_text }}</div>
-                            {% for error in game_form.requirements_text.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
+                        <div class="field-group">
+                            <label class="field-label">Entry Point</label>
+                            <input type="text" name="entry_point"
+                                   class="field-input {% if version_form.entry_point.errors %}is-invalid{% endif %}"
+                                   placeholder="index.html"
+                                   value="{{ version_form.entry_point.value|default:'' }}">
+                            <span class="form-hint">e.g. index.html or main.js</span>
+                            {% for e in version_form.entry_point.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="{{ game_form.cover.id_for_label }}" class="form-label">Cover Image</label>
-                            {{ game_form.cover }}
-                            {% for error in game_form.cover.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
+                    <div class="field-group">
+                        <label class="field-label">Game File <span style="color:var(--text-muted);font-weight:400;">.zip only</span></label>
+                        <input type="file" name="file" class="field-input" accept=".zip">
+                        {% for e in version_form.file.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+                    </div>
 
-                        <hr>
-                        <h5 class="mb-1">How Players Launch the Game</h5>
-                        <p class="text-muted small mb-3">Provide a Play URL or upload a zip file. At least one is required.</p>
-
-                        <div class="mb-3">
-                            <label for="{{ game_form.play_url.id_for_label }}" class="form-label">Play URL</label>
-                            {{ game_form.play_url }}
-                            <div class="form-text">External hosted URL, if not uploading a file.</div>
-                            {% for error in game_form.play_url.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        {% if version_form.non_field_errors %}
-                            <div class="alert alert-danger">{{ version_form.non_field_errors }}</div>
-                        {% endif %}
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="{{ version_form.version_number.id_for_label }}" class="form-label">Version Number</label>
-                                {{ version_form.version_number }}
-                                {% for error in version_form.version_number.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                            <div class="col-md-8 mb-3">
-                                <label for="{{ version_form.entry_point.id_for_label }}" class="form-label">Entry Point</label>
-                                {{ version_form.entry_point }}
-                                <div class="form-text">e.g. index.html or main.js</div>
-                                {% for error in version_form.entry_point.errors %}
-                                    <div class="text-danger small">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="{{ version_form.file.id_for_label }}" class="form-label">Game File <span class="text-muted small">.zip only</span></label>
-                            {{ version_form.file }}
-                            {% for error in version_form.file.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="{{ version_form.changelog.id_for_label }}" class="form-label">Changelog</label>
-                            {{ version_form.changelog }}
-                        </div>
-
-                        <hr>
-                        <h5 class="mb-3">Media</h5>
-
-                        <div class="mb-3">
-                            <label class="form-label">Screenshots</label>
-                            <input type="file" name="images" class="form-control" multiple accept="image/*">
-                            <div class="form-text">Select one or more images.</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Videos</label>
-                            <input type="file" name="videos" class="form-control" multiple accept="video/*">
-                            <div class="form-text">Select one or more videos.</div>
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Create Game</button>
-                    </form>
+                    <div class="field-group">
+                        <label class="field-label">Changelog <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                        <textarea name="changelog" rows="2" class="field-input" placeholder="Initial release..."></textarea>
+                    </div>
                 </div>
             </div>
 
+            <div>
+                <div class="form-card">
+                    <div class="form-card-title">Cover Image</div>
+                    <div class="cover-preview" id="cover-preview">No image selected</div>
+                    <input type="file" name="cover" class="field-input" accept="image/*" id="cover-input"
+                           onchange="previewCover(this)">
+                    {% for e in game_form.cover.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">Screenshots</div>
+                    <input type="file" name="images" class="field-input" multiple accept="image/*">
+                    <span class="form-hint" style="display:block;margin-top:4px;">Select one or more images.</span>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-title">Videos</div>
+                    <input type="file" name="videos" class="field-input" multiple accept="video/*">
+                    <span class="form-hint" style="display:block;margin-top:4px;">Select one or more videos.</span>
+                </div>
+
+                <button type="submit" class="btn-primary-accent" style="width:100%;">Create Game</button>
+            </div>
+
         </div>
-    </div>
+    </form>
+
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function previewCover(input) {
+    var preview = document.getElementById('cover-preview');
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = '<img src="' + e.target.result + '">';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
 {% endblock %}

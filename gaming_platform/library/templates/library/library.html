@@ -1,369 +1,118 @@
-{% extends 'main/base.html' %}
+{% extends "main/base.html" %}
 {% load static %}
 
 {% block title %}My Library{% endblock %}
 
 {% block content %}
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+<div class="library-wrap">
 
-  :root {
-    --bg: #0d0f14;
-    --surface: #15181f;
-    --surface-2: #1c2028;
-    --border: #ffffff0f;
-    --accent: #c8f135;
-    --accent-dim: #c8f13522;
-    --text: #e8eaf0;
-    --muted: #6b7280;
-    --radius: 12px;
-  }
+    <div class="library-header">
+        <div>
+            <h1 class="page-title">My Library</h1>
+            <p class="page-count">{{ total_games }} game{{ total_games|pluralize }}</p>
+        </div>
+        {% if games_data %}
+        <input type="text"
+               class="library-search"
+               id="lib-search"
+               placeholder="Search your library..."
+               oninput="filterLibrary(this.value)">
+        {% endif %}
+    </div>
 
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+    {% if games_data %}
+    <div class="lib-games-grid" id="lib-grid">
+        {% for item in games_data %}
+        <div class="lib-card" data-title="{{ item.game.title|lower }}">
 
-  .lib-wrap {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 48px 24px;
-  }
-
-  .lib-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 40px;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
-
-  .lib-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 2.6rem;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--text);
-    margin: 0;
-  }
-
-  .lib-title span {
-    color: var(--accent);
-  }
-
-  .lib-count {
-    font-size: 0.85rem;
-    color: var(--muted);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 6px 14px;
-    border-radius: 999px;
-  }
-
-  .search-bar {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 18px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    margin-bottom: 32px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .search-bar::placeholder { color: var(--muted); }
-  .search-bar:focus { border-color: var(--accent); }
-
-  .empty-state {
-    text-align: center;
-    padding: 80px 24px;
-    color: var(--muted);
-  }
-
-  .empty-state .icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
-    display: block;
-  }
-
-  .empty-state p {
-    font-size: 1.1rem;
-    margin-bottom: 20px;
-  }
-
-  .btn-browse {
-    background: var(--accent);
-    color: #0d0f14;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    padding: 12px 28px;
-    border-radius: var(--radius);
-    text-decoration: none;
-    display: inline-block;
-    font-size: 0.9rem;
-    transition: opacity 0.2s;
-  }
-
-  .btn-browse:hover { opacity: 0.85; color: #0d0f14; }
-
-  .game-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-  }
-
-  .game-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s, border-color 0.2s;
-  }
-
-  .game-card:hover {
-    transform: translateY(-3px);
-    border-color: #ffffff22;
-  }
-
-  .card-cover {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
-    display: block;
-    background: var(--surface-2);
-  }
-
-  .cover-placeholder {
-    width: 100%;
-    height: 160px;
-    background: var(--surface-2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    color: var(--muted);
-  }
-
-  .card-body {
-    padding: 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .card-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .card-meta {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .badge {
-    font-size: 0.7rem;
-    font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    color: var(--muted);
-    border: 1px solid var(--border);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .badge-source {
-    color: var(--accent);
-    border-color: var(--accent-dim);
-    background: var(--accent-dim);
-  }
-
-  .card-stats {
-    display: flex;
-    gap: 14px;
-    margin-top: 4px;
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .stat-label {
-    font-size: 0.68rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .stat-value {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .card-footer {
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 8px;
-  }
-
-  .btn-play {
-    flex: 1;
-    background: var(--accent);
-    color: #0d0f14;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.85rem;
-    border: none;
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center;
-    text-decoration: none;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-
-  .btn-play:hover { opacity: 0.85; color: #0d0f14; }
-
-  .btn-detail {
-    background: var(--surface-2);
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: color 0.2s;
-  }
-
-  .btn-detail:hover { color: var(--text); }
-
-  .no-results {
-    display: none;
-    text-align: center;
-    padding: 48px;
-    color: var(--muted);
-    font-size: 1rem;
-    grid-column: 1 / -1;
-  }
-</style>
-
-<div class="lib-wrap">
-  <div class="lib-header">
-    <h1 class="lib-title">My <span>Library</span></h1>
-    <span class="lib-count">{{ total_games }} game{{ total_games|pluralize }}</span>
-  </div>
-
-  {% if games_data %}
-    <input
-      type="text"
-      class="search-bar"
-      id="searchInput"
-      placeholder="Search your library..."
-      oninput="filterGames(this.value)"
-    >
-
-    <div class="game-grid" id="gameGrid">
-      {% for item in games_data %}
-        <div class="game-card" data-title="{{ item.game.title|lower }}">
-
-          {% if item.game.cover %}
-            <img src="{{ item.game.cover.url }}" alt="{{ item.game.title }}" class="card-cover">
-          {% else %}
-            <div class="cover-placeholder">🎮</div>
-          {% endif %}
-
-          <div class="card-body">
-            <h3 class="card-title" title="{{ item.game.title }}">{{ item.game.title }}</h3>
-
-            <div class="card-meta">
-              <span class="badge">{{ item.game.get_platform_display }}</span>
-              <span class="badge badge-source">{{ item.entry.source }}</span>
-              {% for g in item.game.genre.all %}
-                <span class="badge">{{ g.name }}</span>
-              {% endfor %}
+            <div class="lib-card-cover">
+                {% if item.game.cover %}
+                    <img src="{{ item.game.cover.url }}" alt="{{ item.game.title }}">
+                {% else %}
+                    <div class="lib-card-cover-placeholder">🎮</div>
+                {% endif %}
             </div>
 
-            <div class="card-stats">
-              <div class="stat">
-                <span class="stat-label">Playtime</span>
-                <span class="stat-value">
-                  {% if item.progress %}
-                    {{ item.progress.playtime_display }}
-                  {% else %}
-                    0m
-                  {% endif %}
-                </span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Last Played</span>
-                <span class="stat-value">
-                  {% if item.progress and item.progress.last_played %}
-                    {{ item.progress.last_played|date:"M d, Y" }}
-                  {% else %}
-                    Never
-                  {% endif %}
-                </span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Added</span>
-                <span class="stat-value">{{ item.entry.acquired_at|date:"M d, Y" }}</span>
-              </div>
-            </div>
-          </div>
+            <div class="lib-card-body">
+                <div class="lib-card-title" title="{{ item.game.title }}">{{ item.game.title }}</div>
 
-          <div class="card-footer">
-            {% if item.is_playable %}
-              <a href="{% url 'library:play_game' item.game.slug %}" class="btn-play">▶ Play</a>
-            {% else %}
-              <span class="btn-play" style="opacity:0.4;cursor:not-allowed;">Unavailable</span>
-            {% endif %}
-            <a href="{% url 'games:game_detail' item.game.slug %}" class="btn-detail">Details</a>
-          </div>
+                <div class="lib-card-badges">
+                    <span class="lib-badge">{{ item.game.get_platform_display }}</span>
+                    <span class="lib-badge lib-badge--source">{{ item.entry.source }}</span>
+                    {% for g in item.game.genre.all %}
+                        <span class="lib-badge">{{ g.name }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="lib-card-stats">
+                    <div>
+                        <div class="lib-stat-label">Playtime</div>
+                        <div class="lib-stat-value">
+                            {% if item.progress %}{{ item.progress.playtime_display }}{% else %}0m{% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="lib-stat-label">Last Played</div>
+                        <div class="lib-stat-value">
+                            {% if item.progress and item.progress.last_played %}
+                                {{ item.progress.last_played|date:"M d, Y" }}
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <div class="lib-stat-label">Added</div>
+                        <div class="lib-stat-value">{{ item.entry.acquired_at|date:"M d" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lib-card-footer">
+                {% if item.is_playable %}
+                    <a href="{% url 'library:play_game' item.game.slug %}" class="btn-lib-play">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Play
+                    </a>
+                {% else %}
+                    <span class="btn-lib-play btn-lib-play--disabled">Unavailable</span>
+                {% endif %}
+                <a href="{% url 'games:game_detail' item.game.slug %}" class="btn-lib-detail">Details</a>
+            </div>
 
         </div>
-      {% endfor %}
+        {% endfor %}
 
-      <p class="no-results" id="noResults">No games match your search.</p>
+        <div id="lib-no-results" style="display:none;grid-column:1/-1;" class="empty-state">
+            No games match your search.
+        </div>
     </div>
 
-  {% else %}
-    <div class="empty-state">
-      <span class="icon">🎮</span>
-      <p>Your library is empty.</p>
-      <a href="{% url 'games:all_games' %}" class="btn-browse">Browse Games</a>
+    {% else %}
+    <div class="empty-state" style="padding:80px 0;">
+        <div style="font-size:48px;margin-bottom:16px;">🎮</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Your library is empty</div>
+        <p style="margin-bottom:24px;">Games you purchase will appear here.</p>
+        <a href="{% url 'games:all_games' %}" class="btn-primary-accent">Browse Games</a>
     </div>
-  {% endif %}
+    {% endif %}
+
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-  function filterGames(query) {
-    const q = query.toLowerCase();
-    const cards = document.querySelectorAll('.game-card');
-    let visible = 0;
-    cards.forEach(card => {
-      const match = card.dataset.title.includes(q);
-      card.style.display = match ? '' : 'none';
-      if (match) visible++;
+function filterLibrary(query) {
+    var q = query.toLowerCase();
+    var cards = document.querySelectorAll('.lib-card');
+    var visible = 0;
+    cards.forEach(function(card) {
+        var match = card.dataset.title.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
     });
-    const noResults = document.getElementById('noResults');
+    var noResults = document.getElementById('lib-no-results');
     if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';
-  }
+}
 </script>
 {% endblock %}

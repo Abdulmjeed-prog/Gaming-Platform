@@ -3,99 +3,87 @@
 {% block title %}My Cart{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h2 class="mb-4">My Cart</h2>
 
-    {% if items %}
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    {% for item in items %}
-                    <div class="row align-items-center py-3 {% if not forloop.last %}border-bottom{% endif %}">
-                        <div class="col-md-2">
-                            {% if item.game.cover %}
-                                <img src="{{ item.game.cover.url }}" alt="{{ item.game.title }}" class="img-fluid rounded">
-                            {% else %}
-                                <div class="bg-light text-center p-3 rounded small">No Image</div>
-                            {% endif %}
-                        </div>
+{% if items %}
+<div class="cart-wrap">
 
-                        <div class="col-md-3">
-                            <h5 class="mb-1">{{ item.game.title }}</h5>
-                            <p class="text-muted mb-1">{{ item.game.get_platform_display }}</p>
-                            <small class="text-muted">{{ item.game.publisher }}</small>
-                        </div>
+    <div class="cart-items-card">
+        <div class="cart-items-header">Cart ({{ items|length }} item{{ items|length|pluralize }})</div>
 
-                        <div class="col-md-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <form method="POST" action="{% url 'commerce:decrease_quantity' item.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-secondary btn-sm">-</button>
-                                </form>
+        {% for item in items %}
+        <div class="cart-item">
 
-                                <span class="fw-semibold">{{ item.quantity }}</span>
-
-                                <form method="POST" action="{% url 'commerce:increase_quantity' item.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-secondary btn-sm">+</button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2 text-md-center">
-                            <span>${{ item.price }}</span>
-                        </div>
-
-                        <div class="col-md-2 text-md-end">
-                            <div class="fw-bold mb-2">${{ item.subtotal }}</div>
-
-                            <form method="POST" action="{% url 'commerce:remove_from_cart' item.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-danger">
-                                    Remove
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
+            <div class="cart-item-cover">
+                {% if item.game.cover %}
+                    <img src="{{ item.game.cover.url }}" alt="{{ item.game.title }}">
+                {% else %}
+                    <div class="cart-item-cover-placeholder"></div>
+                {% endif %}
             </div>
-        </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h4 class="mb-3">Order Summary</h4>
-
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Total Items</span>
-                        <span>{{ items|length }}</span>
-                    </div>
-
-                    <div class="d-flex justify-content-between mb-3">
-                        <span>Total Price</span>
-                        <span class="fw-bold">${{ total }}</span>
-                    </div>
-
-                    <hr>
-
-                    <a href="{% url 'commerce:checkout_view' %}" class="btn btn-primary w-100 mb-2">Proceed to Checkout</a>
-                    <a href="{% url 'games:all_games' %}" class="btn btn-outline-secondary w-100">
-                        Continue Shopping
-                    </a>
-                </div>
+            <div>
+                <div class="cart-item-title">{{ item.game.title }}</div>
+                <div class="cart-item-platform">{{ item.game.get_platform_display }}</div>
             </div>
+
+            <div class="qty-controls">
+                <form method="POST" action="{% url 'commerce:decrease_quantity' item.id %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="qty-btn">−</button>
+                </form>
+                <span class="qty-val">{{ item.quantity }}</span>
+                <form method="POST" action="{% url 'commerce:increase_quantity' item.id %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="qty-btn">+</button>
+                </form>
+            </div>
+
+            <div class="cart-item-price">${{ item.price }}</div>
+
+            <form method="POST" action="{% url 'commerce:remove_from_cart' item.id %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="btn-danger-sm">Remove</button>
+            </form>
+
         </div>
+        {% endfor %}
     </div>
-    {% else %}
-    <div class="card shadow-sm border-0">
-        <div class="card-body text-center py-5">
-            <h4 class="mb-3">Your cart is empty</h4>
-            <p class="text-muted">Looks like you have not added any games yet.</p>
-            <a href="{% url 'games:all_games' %}" class="btn btn-primary">Browse Games</a>
+
+    <div class="cart-summary-card">
+        <div class="cart-summary-title">Order Summary</div>
+
+        {% for item in items %}
+        <div class="summary-row">
+            <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.game.title }}</span>
+            <span>${{ item.price }}</span>
         </div>
+        {% endfor %}
+
+        <div class="summary-divider"></div>
+        <div class="summary-total">
+            <span>Total</span>
+            <span>${{ total }}</span>
+        </div>
+
+        <a href="{% url 'commerce:checkout_view' %}" class="btn-primary-accent" style="width:100%;margin-bottom:10px;">
+            Proceed to Checkout
+        </a>
+        <a href="{% url 'games:all_games' %}" class="btn-ghost" style="width:100%;">
+            Continue Shopping
+        </a>
     </div>
-    {% endif %}
+
 </div>
+
+{% else %}
+
+<div class="cart-empty-state">
+    <div class="cart-empty-icon">🛒</div>
+    <div class="cart-empty-title">Your cart is empty</div>
+    <p class="cart-empty-text">You haven't added any games yet. Browse the catalog and find something you'll love.</p>
+    <a href="{% url 'games:all_games' %}" class="btn-primary-accent">Browse Games</a>
+</div>
+
+{% endif %}
+
 {% endblock %}

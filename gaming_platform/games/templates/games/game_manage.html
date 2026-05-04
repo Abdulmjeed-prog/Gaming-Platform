@@ -1,112 +1,105 @@
-{% extends 'main/base.html' %}
-{% load static %}
+{% extends "main/base.html" %}
 
 {% block title %}Manage — {{ game.title }}{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="dev-wrap">
 
-    <div class="d-flex align-items-center gap-3 mb-1">
-        <a href="{% url 'accounts:developer_dashboard' %}" class="text-muted text-decoration-none small">&larr; My Games</a>
+    <div style="margin-bottom:20px;">
+        <a href="{% url 'accounts:developer_dashboard' %}"
+           style="font-size:13px;color:var(--text-muted);display:inline-flex;align-items:center;gap:4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            My Games
+        </a>
     </div>
 
-    <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-5 mt-2">
+    <div class="page-header" style="margin-bottom:28px;">
         <div>
-            <h2 class="mb-1">{{ game.title }}</h2>
-            <span class="text-muted small">{{ game.slug }}</span>
+            <h1 class="page-title">{{ game.title }}</h1>
+            <p class="page-count">{{ game.slug }}</p>
         </div>
-        {% if game.is_active %}
-            <span class="badge bg-success fs-6 px-3 py-2">Published</span>
-        {% else %}
-            <span class="badge bg-secondary fs-6 px-3 py-2">Draft</span>
-        {% endif %}
+        <span class="dev-game-status {% if game.is_active %}dev-game-status--published{% else %}dev-game-status--draft{% endif %}"
+              style="position:static;font-size:13px;padding:6px 14px;">
+            {% if game.is_active %}Published{% else %}Draft{% endif %}
+        </span>
     </div>
 
-    <div class="row g-3">
+    <div class="action-hub">
 
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'games:edit_game' game.slug %}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 p-4">
-                    <div class="fs-2 mb-2">✏️</div>
-                    <h5>Edit Game</h5>
-                    <p class="text-muted small mb-0">Update details, cover, media, requirements, and pricing.</p>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'games:edit_game' game.slug %}#versions" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 p-4">
-                    <div class="fs-2 mb-2">📦</div>
-                    <h5>Versions</h5>
-                    <p class="text-muted small mb-0">
-                        Upload a new version or change the active one.
-                        {% if versions %}
-                            <br><strong>{{ versions.count }}</strong> version{{ versions.count|pluralize }} uploaded.
-                        {% endif %}
-                    </p>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'games:game_detail' game.slug %}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 p-4">
-                    <div class="fs-2 mb-2">🛒</div>
-                    <h5>Store Page</h5>
-                    <p class="text-muted small mb-0">View how your game appears to players.</p>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'notifications:post_announcement' game.slug %}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 p-4">
-                    <div class="fs-2 mb-2">📢</div>
-                    <h5>Post Announcement</h5>
-                    <p class="text-muted small mb-0">Notify all players who own this game.</p>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'analytics:game_analytics' game.slug %}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 p-4">
-                    <div class="fs-2 mb-2">📊</div>
-                    <h5>Analytics</h5>
-                    <p class="text-muted small mb-0">Sales, player engagement, and rating trends.</p>
-                </div>
-            </a>
-        </div>
-
-        <div class="col-md-6 col-lg-4">
-            <div class="card border-0 shadow-sm h-100 p-4">
-                <div class="fs-2 mb-2">
-                    {% if game.is_active %}🔴{% else %}🟢{% endif %}
-                </div>
-                <h5>{% if game.is_active %}Unpublish{% else %}Publish{% endif %}</h5>
-                <p class="text-muted small mb-3">
-                    {% if game.is_active %}Hide from the store.{% else %}Make visible to players.{% endif %}
-                </p>
-                <form method="POST" action="{% url 'games:toggle_publish' game.slug %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm {% if game.is_active %}btn-warning{% else %}btn-success{% endif %}">
-                        {% if game.is_active %}Unpublish{% else %}Publish{% endif %}
-                    </button>
-                </form>
+        <a href="{% url 'games:edit_game' game.slug %}" class="action-card">
+            <div class="action-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </div>
+            <div class="action-title">Edit Game</div>
+            <div class="action-desc">Update details, cover image, media, requirements, and pricing.</div>
+        </a>
+
+        <a href="{% url 'games:edit_game' game.slug %}#versions" class="action-card">
+            <div class="action-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+            </div>
+            <div class="action-title">Versions</div>
+            <div class="action-desc">
+                Upload a new build or set the active version.
+                {% if versions %}{{ versions.count }} version{{ versions.count|pluralize }} uploaded.{% endif %}
+            </div>
+        </a>
+
+        <a href="{% url 'games:game_detail' game.slug %}" class="action-card">
+            <div class="action-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <div class="action-title">Store Page</div>
+            <div class="action-desc">Preview how your game appears to players on the store.</div>
+        </a>
+
+        <a href="{% url 'notifications:post_announcement' game.slug %}" class="action-card">
+            <div class="action-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 000-6h.5"/><path d="M13.73 21a2 2 0 01-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0118 8"/><path d="M6.26 6.26A5.86 5.86 0 006 8c0 4-3 6-3 6h14"/></svg>
+            </div>
+            <div class="action-title">Announcement</div>
+            <div class="action-desc">Send a notification to every player who owns this game.</div>
+        </a>
+
+        <a href="{% url 'analytics:game_analytics' game.slug %}" class="action-card">
+            <div class="action-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <div class="action-title">Analytics</div>
+            <div class="action-desc">Sales, player engagement, playtime, and rating trends.</div>
+        </a>
+
+        <div class="action-card" style="cursor:default;">
+            <div class="action-icon" style="background:rgba(76,175,80,0.1);color:var(--green);">
+                {% if game.is_active %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                {% else %}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+                {% endif %}
+            </div>
+            <div class="action-title {% if game.is_active %}action-title--danger{% else %}action-title--safe{% endif %}">
+                {% if game.is_active %}Unpublish{% else %}Publish{% endif %}
+            </div>
+            <div class="action-desc">{% if game.is_active %}Hide from the store.{% else %}Make visible to players.{% endif %}</div>
+            <form method="POST" action="{% url 'games:toggle_publish' game.slug %}" style="margin-top:8px;">
+                {% csrf_token %}
+                <button type="submit"
+                        class="{% if game.is_active %}btn-danger-sm{% else %}btn-primary-accent{% endif %}"
+                        style="font-size:13px;padding:7px 16px;">
+                    {% if game.is_active %}Unpublish{% else %}Publish{% endif %}
+                </button>
+            </form>
         </div>
 
-        <div class="col-md-6 col-lg-4">
-            <a href="{% url 'games:delete_game' game.slug %}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm h-100 p-4 border-danger">
-                    <div class="fs-2 mb-2">🗑️</div>
-                    <h5 class="text-danger">Delete Game</h5>
-                    <p class="text-muted small mb-0">Permanently remove this game and all its files.</p>
-                </div>
-            </a>
-        </div>
+        <a href="{% url 'games:delete_game' game.slug %}" class="action-card action-card--danger">
+            <div class="action-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </div>
+            <div class="action-title">Delete Game</div>
+            <div class="action-desc">Permanently remove this game and all its files. Cannot be undone.</div>
+        </a>
 
     </div>
+
 </div>
 {% endblock %}
