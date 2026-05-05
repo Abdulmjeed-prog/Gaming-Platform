@@ -109,8 +109,7 @@ def login_view(request: HttpRequest):
             if request.user.is_superuser:
                 messages.success(request, "Logged in successfully")
                 return redirect('dashboard:admin_dashboard')
-
-            messages.success(request, "Logged in successfully")
+            
             return redirect('main:home_view')
 
         else:
@@ -163,9 +162,73 @@ def developer_dashboard(request: HttpRequest):
     })
 
 
+@login_required
 def profile_view(request: HttpRequest):
-    profile, created = Profile.objects.get_or_create(user=request.user)
-    return render(request, 'accounts/profile.html', {'profile': profile})
+    from library.models import UserGameLibrary, UserGameProgress
+    from social.models import Review, Comment
+
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    library_count = UserGameLibrary.objects.filter(
+        user=request.user, is_active=True
+    ).count()
+
+    # most played first
+    progress_entries = (
+        UserGameProgress.objects
+        .filter(user=request.user)
+        .select_related('game')
+        .order_by('-playtime_seconds')
+    )
+
+    reviews = (
+        Review.objects
+        .filter(user=request.user, is_approved=True)
+        .select_related('game')
+        .order_by('-created_at')
+    )
+
+    # top-level comments only
+    comments = (
+        Comment.objects
+        .filter(user=request.user, is_approved=True, parent=None)
+        .select_related('game')
+        .order_by('-created_at')
+    )
+
+    return render(request, 'accounts/profile.html', {
+        'profile': profile,
+        'library_count': library_count,
+        'progress_entries': progress_entries,
+        'reviews': reviews,
+        'comments': comments,
+    })
+
+
+@login_required
+def profile_edit_view(request: HttpRequest):
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        user_form = CustomUserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            messages.success(request, 'Profile updated.')
+            return redirect('accounts:profile_view')
+        else:
+            messages.error(request, 'Please fix the errors below.')
+    else:
+        user_form = CustomUserUpdateForm(instance=request.user)
+        profile_form = ProfileForm(instance=profile)
+
+    return render(request, 'accounts/profile_edit.html', {
+        'profile': profile,
+        'user_form': user_form,
+        'profile_form': profile_form,
+    })
 
 
 def developer_profile_view(request: HttpRequest, username):
@@ -253,8 +316,7 @@ def follow_toggle_view(request: HttpRequest, developer_id):
 @login_required
 def my_orders_view(request):
     if request.user.groups.filter(name='Developer').exists():
-        messages.warning(request, 'You are not allowed')
-        return redirect('main:home_view')
+        return redirect('accounts:developer_dashboard')
 
     orders = (
         Order.objects

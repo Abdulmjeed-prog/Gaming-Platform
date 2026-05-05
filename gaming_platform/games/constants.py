@@ -1,0 +1,2 @@
+LAST_SEEN_SESSION_KEY = 'last_seen'
+LAST_SEEN_MAX = 6

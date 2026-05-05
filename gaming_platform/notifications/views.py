@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import HttpRequest, HttpResponseForbidden
+from django.http import HttpRequest, HttpResponseForbidden, JsonResponse
+from django.views.decorators.http import require_POST
 from games.models import Game
 from library.models import UserGameLibrary
 from accounts.models import DeveloperProfile, FollowDeveloper
@@ -10,6 +11,40 @@ from .forms import AnnouncementForm
 
 def owns_game(user, game):
     return game.developer_id == user.pk
+
+
+@login_required
+def inbox_view(request: HttpRequest):
+    notifications = (
+        Notification.objects
+        .filter(user=request.user)
+        .order_by('-created_at')
+    )
+    unread_count = notifications.filter(is_read=False).count()
+
+    # mark all as read on page open
+    notifications.filter(is_read=False).update(is_read=True)
+
+    return render(request, 'notifications/inbox.html', {
+        'notifications': notifications,
+        'unread_count': unread_count,
+    })
+
+
+@require_POST
+@login_required
+def mark_read(request: HttpRequest, pk):
+    notif = get_object_or_404(Notification, pk=pk, user=request.user)
+    notif.is_read = True
+    notif.save(update_fields=['is_read'])
+    return JsonResponse({'ok': True})
+
+
+@require_POST
+@login_required
+def mark_all_read(request: HttpRequest):
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return redirect('notifications:inbox')
 
 
 @login_required

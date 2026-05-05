@@ -55,7 +55,7 @@ INSTALLED_APPS = [
     'notifications',
     'social',
     'dashboard',
-    "storages",
+    
 ]
 
 MIDDLEWARE = [
@@ -82,6 +82,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'gaming_platform.context_processors.cart_count',
+                'gaming_platform.context_processors.unread_notifications',
             ],
         },
     },

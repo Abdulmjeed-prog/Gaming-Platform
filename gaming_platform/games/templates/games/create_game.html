@@ -56,7 +56,14 @@
 
                     <div class="field-group">
                         <label class="field-label">Genre</label>
-                        {{ game_form.genre }}
+                        <div class="genre-checkbox-grid {% if game_form.genre.errors %}is-invalid{% endif %}">
+                            {% for choice in game_form.genre %}
+                            <label class="genre-checkbox-item">
+                                {{ choice.tag }}
+                                <span>{{ choice.choice_label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
                         {% for e in game_form.genre.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                     </div>
 
@@ -79,20 +86,13 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="field-group">
-                            <label class="field-label">Publisher</label>
-                            <input type="text" name="publisher"
-                                   class="field-input {% if game_form.publisher.errors %}is-invalid{% endif %}"
-                                   placeholder="Publisher name"
-                                   value="{{ game_form.publisher.value|default:'' }}">
-                            {% for e in game_form.publisher.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Platform</label>
-                            {{ game_form.platform }}
-                            {% for e in game_form.platform.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
-                        </div>
+                    <div class="field-group">
+                        <label class="field-label">Publisher</label>
+                        <input type="text" name="publisher"
+                               class="field-input {% if game_form.publisher.errors %}is-invalid{% endif %}"
+                               placeholder="Publisher name"
+                               value="{{ game_form.publisher.value|default:'' }}">
+                        {% for e in game_form.publisher.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
                     </div>
 
                     <div class="field-group">
@@ -169,8 +169,9 @@
 
                 <div class="form-card">
                     <div class="form-card-title">Screenshots</div>
-                    <input type="file" name="images" class="field-input" multiple accept="image/*">
+                    <input type="file" name="images" id="screenshots-input" class="field-input" multiple accept="image/*" onchange="previewScreenshots(this)">
                     <span class="form-hint" style="display:block;margin-top:4px;">Select one or more images.</span>
+                    <div id="screenshots-preview" class="screenshots-preview-grid"></div>
                 </div>
 
                 <div class="form-card">
@@ -200,5 +201,94 @@ function previewCover(input) {
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+function previewScreenshots(input) {
+    var grid = document.getElementById('screenshots-preview');
+    grid.innerHTML = '';
+    if (!input.files || !input.files.length) return;
+    Array.from(input.files).forEach(function(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var item = document.createElement('div');
+            item.className = 'screenshot-thumb';
+            item.innerHTML = '<img src="' + e.target.result + '" alt="' + file.name + '"><span>' + file.name + '</span>';
+            grid.appendChild(item);
+        };
+        reader.readAsDataURL(file);
+    });
+}
 </script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.genre-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.genre-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-muted);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+}
+
+.genre-checkbox-item:hover {
+    border-color: rgba(255,90,31,0.4);
+    color: var(--text-primary);
+}
+
+.genre-checkbox-item input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.genre-checkbox-item:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(255,90,31,0.08);
+    color: var(--text-primary);
+}
+
+.screenshots-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.screenshot-thumb {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.screenshot-thumb img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.screenshot-thumb span {
+    font-size: 11px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
 {% endblock %}

@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from .models import Game, GameMedia, GameVersion, Genre, GameKey
 from .forms import GameForm, GameVersionForm, GameKeyForm
 from .decorators import developer_required
+from .constants import LAST_SEEN_SESSION_KEY, LAST_SEEN_MAX
 from social.forms import CommentForm, ReviewForm
 from social.models import Comment, Review
 from django.db.models import Q, Sum
@@ -86,6 +87,15 @@ def owns_game(user, game):
     return game.developer_id == user.pk
 
 
+def _track_last_seen(request, game_id):
+    seen = request.session.get(LAST_SEEN_SESSION_KEY, [])
+    if game_id in seen:
+        seen.remove(game_id)
+    seen.insert(0, game_id)
+    request.session[LAST_SEEN_SESSION_KEY] = seen[:LAST_SEEN_MAX]
+    request.session.modified = True
+
+
 @developer_required
 def create_game(request: HttpRequest):
 
@@ -109,6 +119,7 @@ def create_game(request: HttpRequest):
                 game = game_form.save(commit=False)
                 game.developer = request.user
                 game.is_active = False
+                game.platform = Game.PlatformChoices.WEB
                 req_text = game_form.cleaned_data.get('requirements_text', '')
                 requirements = {}
                 for line in req_text.strip().splitlines():
@@ -176,6 +187,7 @@ def edit_game(request: HttpRequest, slug):
                     key, val = line.split(':', 1)
                     requirements[key.strip()] = val.strip()
             updated.requirements = requirements or None
+            updated.platform = Game.PlatformChoices.WEB
             updated.save()
             game_form.save_m2m()
 
@@ -296,6 +308,8 @@ def game_detail(request: HttpRequest, slug):
     images = game.media.filter(media_type='image')
     videos = game.media.filter(media_type='video')
     is_dev = request.user.is_authenticated and owns_game(request.user, game)
+
+    _track_last_seen(request, game.id)
 
     reviews = (
         Review.objects

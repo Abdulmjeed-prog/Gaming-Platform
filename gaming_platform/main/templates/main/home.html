@@ -5,10 +5,6 @@
 
 {% block content %}
 
-{# ── reusable card macro ── #}
-{% with NOTHING='' %}
-{% endwith %}
-
 <section class="hero-carousel" id="hero-carousel">
     <div class="carousel-track" id="carousel-track">
         {% for game in hero_games %}
@@ -20,13 +16,25 @@
             {% endif %}
             <div class="carousel-overlay">
                 <div class="carousel-info">
+                    {% if game.genre.all %}
+                    <div class="carousel-genres">
+                        {% for g in game.genre.all %}<span class="carousel-genre-tag">{{ g.name }}</span>{% endfor %}
+                    </div>
+                    {% endif %}
                     <h2 class="carousel-game-title">{{ game.title }}</h2>
                     <div class="carousel-price-row">
                         {% if game.discount_percent %}
                         <span class="carousel-discount">-{{ game.discount_percent }}%</span>
                         {% endif %}
                         <span class="carousel-price">${{ game.price }}</span>
+                        {% if game.avg_rating > 0 %}
+                        <span class="carousel-rating">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            {{ game.avg_rating }}
+                        </span>
+                        {% endif %}
                     </div>
+                    <a href="{% url 'games:game_detail' game.slug %}" class="carousel-cta">View Game</a>
                 </div>
             </div>
         </div>
@@ -50,6 +58,11 @@
         {% endfor %}
     </div>
     {% endif %}
+    <div class="carousel-curve">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 60" preserveAspectRatio="none">
+            <path d="M0,0 Q720,40 1440,55 L1440,60 L0,60 Z" fill="#1a1b1e"/>
+        </svg>
+    </div>
 </section>
 
 <div class="page-content">
@@ -82,6 +95,107 @@
         </div>
         <div class="games-grid">
             {% for game in recommended_games %}
+            {% include "main/_game_card.html" with game=game %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if recent_reviews %}
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Player Reviews</h2>
+        </div>
+        <div class="reviews-grid">
+            {% for review in recent_reviews %}
+            <div class="home-review-card">
+                <div class="home-review-header">
+                    <img src="{{ review.user.profile.avatar.url }}" alt="{{ review.user.username|first|upper }}" class="home-review-avatar home-review-avatar--img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                    <div class="home-review-avatar" style="display:none">{{ review.user.username|first|upper }}</div>
+                    <div class="home-review-meta">
+                        <span class="home-review-username">{{ review.user.username }}</span>
+                        <a href="{% url 'games:game_detail' review.game.slug %}" class="home-review-game">{{ review.game.title }}</a>
+                    </div>
+                    {% if review.rating %}
+                    <div class="home-review-rating">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--accent)" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        {{ review.rating }}
+                    </div>
+                    {% endif %}
+                </div>
+                <p class="home-review-body">{{ review.comment|truncatechars:160 }}</p>
+                {% if review.created_at %}
+                <span class="home-review-date">{{ review.created_at|date:"M d, Y" }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if bestsellers %}
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Bestsellers</h2>
+            <a href="{% url 'games:all_games' %}" class="section-link">
+                See all
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+        </div>
+
+        <div class="bs-carousel" id="bs-carousel">
+            <div class="bs-carousel-track" id="bs-carousel-track">
+                {% for game in bestsellers %}
+                <div class="bs-carousel-slide">
+                    {% if game.cover %}
+                    <img src="{{ game.cover.url }}" alt="{{ game.title }}" class="bs-carousel-img">
+                    {% else %}
+                    <div class="bs-carousel-placeholder"></div>
+                    {% endif %}
+                    <div class="bs-carousel-overlay">
+                        <div class="bs-carousel-info">
+                            <span class="bs-carousel-badge">#{{ forloop.counter }} Bestseller</span>
+                            <h3 class="bs-carousel-title">{{ game.title }}</h3>
+                            <div class="bs-carousel-meta">
+                                <span class="bs-carousel-price">${{ game.price }}</span>
+                                <span class="bs-carousel-revenue">{{ game.units_sold }} sold</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if bestsellers|length > 1 %}
+            <button class="bs-carousel-btn bs-carousel-btn--prev" id="bs-prev" aria-label="Previous">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="bs-carousel-btn bs-carousel-btn--next" id="bs-next" aria-label="Next">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+            <div class="bs-carousel-dots" id="bs-dots">
+                {% for game in bestsellers %}
+                <button class="bs-carousel-dot {% if forloop.first %}bs-carousel-dot--active{% endif %}" data-index="{{ forloop.counter0 }}"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="bs-games-row">
+            {% for game in bestsellers %}
+            {% include "main/_game_card.html" with game=game %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if last_seen %}
+    <section class="section">
+        <div class="section-header">
+            <h2 class="section-title">Last Seen</h2>
+        </div>
+        <div class="games-grid">
+            {% for game in last_seen %}
             {% include "main/_game_card.html" with game=game %}
             {% endfor %}
         </div>
