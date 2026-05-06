@@ -47,6 +47,7 @@ def admin_add_key_game_view(request):
                 game = form.save(commit=False)
                 game.developer = request.user
                 game.save()
+                form.save_m2m()
 
                 keys_list = form.cleaned_data.get('keys_text', [])
 
@@ -87,6 +88,7 @@ def admin_add_key_game_view(request):
                         order=order_counter
                     )
                     order_counter += 1
+
 
             if existing_keys:
                 messages.warning(
@@ -196,6 +198,7 @@ def admin_update_game_view(request, slug):
             updated_game = form.save(commit=False)
             updated_game.developer = game.developer
             updated_game.save()
+            form.save_m2m()
 
             messages.success(request, "Game updated successfully.")
             return redirect('dashboard:admin_games_list')
